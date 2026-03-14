@@ -592,6 +592,7 @@ async function handleAvisUpload(file) {
         showFeedback('feedbackAvis', data);
         document.getElementById('uploadAvis').classList.add('loaded');
         document.querySelector('#uploadAvis .label').textContent = 'Document charge : ' + file.name;
+        setTimeout(() => calculer(), 100);
     } catch (e) {
         alert('Erreur de lecture du PDF. Verifiez que c\'est bien un avis d\'imposition.');
         console.error(e);
@@ -671,6 +672,7 @@ async function handlePaieUpload(file) {
         if (d.netImposable) lines.push('Net imposable : ' + fmtMoney(d.netImposable));
         if (lines.length === 0) lines.push('Aucune donnee reconnue.');
         document.getElementById('feedbackPaieContent').innerHTML = lines.join('<br>');
+        setTimeout(() => calculer(), 100);
     } catch(e) { alert('Erreur lecture PDF.'); console.error(e); }
 }
 
@@ -708,6 +710,7 @@ async function handleBilanUpload(file) {
         if (d.effectif) lines.push('Effectif : ' + d.effectif);
         if (lines.length === 0) lines.push('Aucune donnee reconnue. Saisissez manuellement.');
         document.getElementById('feedbackBilanContent').innerHTML = lines.join('<br>');
+        setTimeout(() => calculer(), 100);
     } catch(e) { alert('Erreur lecture fichier.'); console.error(e); }
 }
 
