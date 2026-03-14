@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Contribution France - A quoi servent mes impots ?</title>
+    <style>
+        :root {
+            --blue: #000091;
+            --red: #e1000f;
+            --bg: #f6f6f6;
+            --card: #ffffff;
+            --text: #1e1e1e;
+            --muted: #666666;
+            --border: #dddddd;
+            --green: #008941;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Marianne', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--blue);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        header p {
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        .tricolore {
+            height: 4px;
+            background: linear-gradient(to right, var(--blue) 33%, white 33%, white 66%, var(--red) 66%);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .intro {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--blue);
+        }
+
+        .intro p {
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        /* ---- FORM ---- */
+        .form-section {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .form-section h2 {
+            color: var(--blue);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group .hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(0,0,145,0.15);
+        }
+
+        .btn-calculer {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem auto 0;
+            padding: 1rem;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-calculer:hover {
+            background: #1212a0;
+        }
+
+        /* ---- RESULTS ---- */
+        #results {
+            display: none;
+        }
+
+        .results-header {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .results-header h2 {
+            color: var(--blue);
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .big-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--blue);
+        }
+
+        .big-number-label {
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .summary-card {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-card .amount {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .summary-card .label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        /* ---- BUDGET BREAKDOWN ---- */
+        .budget-section {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .budget-section h2 {
+            color: var(--blue);
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .budget-section .subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .budget-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-radius: 4px;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .budget-item:hover {
+            background: #f0f0ff;
+        }
+
+        .budget-item:last-child {
+            border-bottom: none;
+        }
+
+        .budget-icon {
+            font-size: 1.6rem;
+            width: 42px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .budget-info {
+            flex: 1;
+            margin-left: 0.8rem;
+        }
+
+        .budget-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .budget-desc {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .budget-amount {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .budget-amount .money {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text);
+        }
+
+        .budget-amount .percent {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .budget-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-top: 0.3rem;
+        }
+
+        .budget-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        /* Detail panel */
+        .budget-detail {
+            display: none;
+            background: #f8f8ff;
+            border-radius: 6px;
+            padding: 1rem 1rem 1rem 3.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+
+        .budget-detail.open {
+            display: block;
+        }
+
+        .budget-detail .concrete {
+            margin-top: 0.5rem;
+            padding: 0.7rem;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid var(--blue);
+        }
+
+        .budget-detail .concrete strong {
+            color: var(--blue);
+        }
+
+        /* ---- VISUAL CHART ---- */
+        .chart-container {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .chart-container h2 {
+            color: var(--blue);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .donut-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .donut-svg {
+            width: 260px;
+            height: 260px;
+        }
+
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ---- CONCRETE SECTION ---- */
+        .concrete-section {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .concrete-section h2 {
+            color: var(--blue);
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .concrete-section .subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .concrete-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .concrete-card {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: transform 0.15s;
+        }
+
+        .concrete-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .concrete-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .concrete-card .value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--blue);
+        }
+
+        .concrete-card .unit {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .concrete-card .card-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.3rem;
+        }
+
+        .concrete-card .card-detail {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        /* ---- PER DAY ---- */
+        .per-day-section {
+            background: linear-gradient(135deg, #000091, #1212b0);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .per-day-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .per-day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .per-day-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+
+        .per-day-item .icon {
+            font-size: 1.5rem;
+        }
+
+        .per-day-item .amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .per-day-item .label {
+            font-size: 0.75rem;
+            opacity: 0.85;
+        }
+
+        /* ---- NET BENEFICIARY ---- */
+        .balance-section {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .balance-section h2 {
+            color: var(--blue);
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .balance-section .subtitle {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .balance-bar .label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .balance-bar .bar-bg {
+            flex: 1;
+            height: 28px;
+            background: #eee;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-bar .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: white;
+            transition: width 0.6s;
+        }
+
+        .balance-verdict {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .balance-verdict.positive {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+        }
+
+        .balance-verdict.negative {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+        }
+
+        .balance-verdict.neutral {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+
+        .balance-verdict .verdict-text {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .balance-verdict .verdict-detail {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ---- METHODOLOGY ---- */
+        .methodology {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .methodology summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--blue);
+        }
+
+        .methodology .content {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        footer a {
+            color: var(--blue);
+        }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.3rem; }
+            .big-number { font-size: 2rem; }
+            .container { padding: 1rem 0.7rem; }
+            .form-section, .budget-section, .chart-container,
+            .concrete-section, .per-day-section, .balance-section { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Ma Contribution France</h1>
+    <p>Decouvrez concretement a quoi servent vos impots et cotisations</p>
+</header>
+<div class="tricolore"></div>
+
+<div class="container">
+    <div class="intro">
+        <p>Chaque annee, vous payez des impots, des cotisations sociales et des taxes. Mais savez-vous concretement ce que cela finance ?
+        Remplissez vos informations ci-dessous pour decouvrir la repartition exacte de votre contribution au fonctionnement de la France.</p>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div class="form-section">
+        <h2>Votre situation</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="revenu">Revenu annuel brut</label>
+                <div class="hint">Salaire brut annuel (avant impots et cotisations)</div>
+                <input type="number" id="revenu" placeholder="ex: 35000" value="35000">
+            </div>
+            <div class="form-group">
+                <label for="statut">Statut professionnel</label>
+                <div class="hint">Votre regime d'activite</div>
+                <select id="statut">
+                    <option value="salarie">Salarie(e) du prive</option>
+                    <option value="fonctionnaire">Fonctionnaire</option>
+                    <option value="independant">Independant / Auto-entrepreneur</option>
+                    <option value="retraite">Retraite(e)</option>
+                    <option value="chomeur">Demandeur d'emploi</option>
+                    <option value="etudiant">Etudiant(e)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="situation">Situation familiale</label>
+                <select id="situation">
+                    <option value="celibataire">Celibataire</option>
+                    <option value="couple">En couple (mariage/PACS)</option>
+                    <option value="couple_1revenu">En couple, 1 seul revenu</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="enfants">Nombre d'enfants a charge</label>
+                <select id="enfants">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="loyer">Loyer mensuel (si locataire)</label>
+                <div class="hint">Laissez 0 si proprietaire</div>
+                <input type="number" id="loyer" placeholder="ex: 800" value="0">
+            </div>
+            <div class="form-group">
+                <label for="conso">Estimation depenses mensuelles</label>
+                <div class="hint">Alimentation, transport, loisirs, etc.</div>
+                <input type="number" id="conso" placeholder="ex: 1500" value="1500">
+            </div>
+        </div>
+        <button class="btn-calculer" onclick="calculer()">Calculer ma contribution</button>
+    </div>
+
+    <!-- RESULTATS -->
+    <div id="results">
+
+        <!-- RESUME -->
+        <div class="results-header">
+            <h2>Votre contribution totale annuelle</h2>
+            <div class="big-number" id="totalContrib">-</div>
+            <div class="big-number-label">par an, soit <strong id="totalMois">-</strong> / mois</div>
+            <div class="summary-cards" id="summaryCards"></div>
+        </div>
+
+        <!-- GRAPHIQUE -->
+        <div class="chart-container">
+            <h2>Repartition visuelle de votre contribution</h2>
+            <div class="donut-wrapper">
+                <svg class="donut-svg" viewBox="0 0 42 42" id="donutChart"></svg>
+                <div class="donut-legend" id="donutLegend"></div>
+            </div>
+        </div>
+
+        <!-- BUDGET ETAT -->
+        <div class="budget-section">
+            <h2>Budget de l'Etat - Ou va votre impot sur le revenu et la TVA</h2>
+            <div class="subtitle">Cliquez sur un poste pour voir le detail concret</div>
+            <div id="budgetEtatList"></div>
+        </div>
+
+        <!-- SECU -->
+        <div class="budget-section">
+            <h2>Protection sociale - Ou vont vos cotisations</h2>
+            <div class="subtitle">Securite sociale, retraite, chomage, famille</div>
+            <div id="budgetSecuList"></div>
+        </div>
+
+        <!-- COLLECTIVITES -->
+        <div class="budget-section">
+            <h2>Collectivites locales - Region, departement, commune</h2>
+            <div class="subtitle">Finances par la taxe fonciere, CFE, dotations de l'Etat, et une part de TVA</div>
+            <div id="budgetLocalList"></div>
+        </div>
+
+        <!-- CONCRET -->
+        <div class="concrete-section">
+            <h2>Concretement, votre contribution finance...</h2>
+            <div class="subtitle">Equivalences concretes rapportees a votre contribution personnelle</div>
+            <div class="concrete-grid" id="concreteGrid"></div>
+        </div>
+
+        <!-- PAR JOUR -->
+        <div class="per-day-section">
+            <h2>Chaque jour, vous financez...</h2>
+            <div class="per-day-grid" id="perDayGrid"></div>
+        </div>
+
+        <!-- BALANCE -->
+        <div class="balance-section">
+            <h2>Votre balance contributeur / beneficiaire</h2>
+            <div class="subtitle">Estimation de ce que vous recevez en retour de la collectivite (services publics, aides, infrastructure)</div>
+            <div id="balanceContent"></div>
+        </div>
+
+        <!-- METHODOLOGIE -->
+        <details class="methodology">
+            <summary>Methodologie et sources</summary>
+            <div class="content">
+                <p><strong>Sources des donnees :</strong></p>
+                <ul>
+                    <li>Budget general de l'Etat 2025 (loi de finances) - environ 500 Md euros de depenses</li>
+                    <li>Budget de la Securite sociale (PLFSS 2025) - environ 640 Md euros</li>
+                    <li>Budgets des collectivites locales (DGCL) - environ 280 Md euros</li>
+                    <li>Baremes d'imposition 2025 (impot sur le revenu, CSG, cotisations sociales)</li>
+                </ul>
+                <p style="margin-top:0.8rem"><strong>Limites :</strong></p>
+                <ul>
+                    <li>Les calculs sont des estimations simplifiees a vocation pedagogique</li>
+                    <li>Les cotisations patronales sont incluses car elles font partie du cout du travail</li>
+                    <li>La TVA est estimee sur la base des depenses declarees</li>
+                    <li>La repartition budgetaire est basee sur les grandes missions/programmes</li>
+                    <li>Les services recus (balance) sont des moyennes nationales par habitant</li>
+                </ul>
+                <p style="margin-top:0.8rem"><strong>Ce simulateur est un outil pedagogique, pas un calculateur fiscal officiel.</strong></p>
+            </div>
+        </details>
+    </div>
+</div>
+
+<footer>
+    <p>Ma Contribution France - Outil pedagogique open source</p>
+    <p>Donnees basees sur les budgets publics 2025 | <a href="https://github.com/scoly-oss/ma-contribution-france">Code source</a></p>
+</footer>
+
+<script>
+// =============================================
+// DONNEES BUDGETAIRES (sources: LFI 2025, PLFSS 2025, DGCL)
+// =============================================
+
+// Budget de l'Etat: repartition par mission (en % des depenses totales ~500 Md)
+const BUDGET_ETAT = [
+    {
+        id: 'enseignement', nom: 'Education nationale', icon: '🎓', pct: 16.2, color: '#2196F3',
+        desc: 'Ecoles, colleges, lycees, enseignement superieur',
+        concret: 'Votre contribution finance <strong>{jours} jours de scolarite</strong> pour un eleve (cout moyen: 8 960 euros/an par eleve). Cela couvre les enseignants, les batiments scolaires, les fournitures pedagogiques.'
+    },
+    {
+        id: 'defense', nom: 'Defense et armees', icon: '🛡️', pct: 10.8, color: '#607D8B',
+        desc: 'Armee, dissuasion nucleaire, operations exterieures',
+        concret: 'Vous financez <strong>{heures}h de patrouille</strong> militaire et contribuez a l\'equipement de <strong>{soldats} soldats</strong>. La France a la 1ere armee d\'Europe.'
+    },
+    {
+        id: 'dette', nom: 'Charge de la dette', icon: '🏦', pct: 10.4, color: '#795548',
+        desc: 'Interets de la dette publique (environ 3 200 Md euros)',
+        concret: 'Vous payez <strong>{euros} euros d\'interets</strong> sur la dette. Chaque Francais "doit" en moyenne 48 000 euros. La charge de la dette est le 2e poste budgetaire.'
+    },
+    {
+        id: 'recherche', nom: 'Recherche et enseignement sup.', icon: '🔬', pct: 5.8, color: '#9C27B0',
+        desc: 'CNRS, universites, recherche spatiale, innovation',
+        concret: 'Vous financez <strong>{minutes} minutes de recherche</strong> d\'un chercheur du CNRS et contribuez a la recherche spatiale, medicale, et technologique francaise.'
+    },
+    {
+        id: 'securite', nom: 'Securite interieure', icon: '🚔', pct: 4.6, color: '#F44336',
+        desc: 'Police nationale, gendarmerie, securite civile',
+        concret: 'Vous financez <strong>{heures}h de patrouille</strong> de police/gendarmerie. La France compte 250 000 policiers et gendarmes.'
+    },
+    {
+        id: 'justice', nom: 'Justice', icon: '⚖️', pct: 2.4, color: '#3F51B5',
+        desc: 'Tribunaux, prisons, aide juridictionnelle',
+        concret: 'Vous financez <strong>{minutes} minutes d\'audience</strong> au tribunal et contribuez au fonctionnement de {prisons} places de prison.'
+    },
+    {
+        id: 'ecologie', nom: 'Ecologie et transition', icon: '🌿', pct: 5.6, color: '#4CAF50',
+        desc: 'Transition energetique, biodiversite, climat',
+        concret: 'Vous financez <strong>{m2} m2 de renovation energetique</strong> et contribuez aux politiques de lutte contre le changement climatique.'
+    },
+    {
+        id: 'solidarite', nom: 'Solidarite et insertion', icon: '🤝', pct: 7.2, color: '#FF9800',
+        desc: 'RSA, AAH, hebergement d\'urgence, aide alimentaire',
+        concret: 'Vous financez <strong>{jours} jours de RSA</strong> pour une personne seule (607 euros/mois) et contribuez a l\'hebergement d\'urgence de {personnes} personnes.'
+    },
+    {
+        id: 'collectivites', nom: 'Transferts aux collectivites', icon: '🏛️', pct: 9.8, color: '#009688',
+        desc: 'Dotations globales de fonctionnement (DGF), perequation',
+        concret: 'Vous contribuez <strong>{euros} euros</strong> aux dotations de l\'Etat vers votre commune, departement et region.'
+    },
+    {
+        id: 'culture', nom: 'Culture', icon: '🎭', pct: 0.8, color: '#E91E63',
+        desc: 'Musees, spectacle vivant, patrimoine, audiovisuel public',
+        concret: 'Vous financez <strong>{entrees} entrees au musee</strong> (cout moyen subventionne: 15 euros) et contribuez a la preservation du patrimoine.'
+    },
+    {
+        id: 'sport', nom: 'Sport', icon: '⚽', pct: 0.3, color: '#00BCD4',
+        desc: 'Sport pour tous, haut niveau, JO',
+        concret: 'Vous financez <strong>{heures}h d\'acces</strong> a un equipement sportif municipal subventionne.'
+    },
+    {
+        id: 'diplomatie', nom: 'Affaires etrangeres', icon: '🌍', pct: 1.4, color: '#FF5722',
+        desc: 'Diplomatie, aide au developpement, consulats',
+        concret: 'Vous contribuez a l\'aide au developpement a hauteur de <strong>{euros} euros</strong> et au reseau diplomatique francais (163 ambassades).'
+    },
+    {
+        id: 'agriculture', nom: 'Agriculture et alimentation', icon: '🌾', pct: 0.8, color: '#8BC34A',
+        desc: 'Aides aux agriculteurs, securite alimentaire',
+        concret: 'Vous financez <strong>{repas} repas de cantine</strong> scolaire subventionnes et contribuez au soutien de l\'agriculture francaise.'
+    },
+    {
+        id: 'transport', nom: 'Infrastructures et transports', icon: '🚄', pct: 2.8, color: '#673AB7',
+        desc: 'Routes, rail, ports, transport urbain',
+        concret: 'Vous financez l\'entretien de <strong>{km} metres de route nationale</strong> et contribuez aux lignes de train et transport en commun.'
+    },
+    {
+        id: 'logement', nom: 'Logement et urbanisme', icon: '🏠', pct: 3.2, color: '#CDDC39',
+        desc: 'APL, logement social, renovation urbaine',
+        concret: 'Vous contribuez <strong>{euros} euros aux APL</strong> versees chaque annee. 6,5 millions de menages beneficient d\'une aide au logement.'
+    },
+    {
+        id: 'autres_etat', nom: 'Autres missions', icon: '📋', pct: 17.9, color: '#9E9E9E',
+        desc: 'Administration generale, pensions fonctionnaires, outre-mer, travail, immigration, etc.',
+        concret: 'Ce poste couvre les frais de fonctionnement de l\'Etat, les pensions des fonctionnaires retraites, et de nombreuses missions diverses.'
+    }
+];
+
+// Protection sociale (Secu ~640 Md)
+const BUDGET_SECU = [
+    {
+        id: 'maladie', nom: 'Assurance maladie', icon: '🏥', pct: 34.0, color: '#F44336',
+        desc: 'Hopitaux, medecins, medicaments, arrets maladie',
+        concret: 'Vous financez <strong>{consultations} consultations</strong> chez un generaliste (cout reel: ~46 euros) et <strong>{jours_hosp} jours d\'hospitalisation</strong> (cout moyen: ~2 000 euros/jour).'
+    },
+    {
+        id: 'retraite', nom: 'Retraites', icon: '👴', pct: 45.0, color: '#FF9800',
+        desc: 'Pensions de retraite de base et complementaires',
+        concret: 'Vous financez <strong>{mois} mois de pension</strong> de retraite (pension moyenne: 1 531 euros brut/mois). 17 millions de retraites en France.'
+    },
+    {
+        id: 'famille', nom: 'Famille', icon: '👨‍👩‍👧‍👦', pct: 7.5, color: '#4CAF50',
+        desc: 'Allocations familiales, creches, conge parental',
+        concret: 'Vous financez <strong>{jours_creche} jours de place en creche</strong> (cout: ~2 500 euros/mois par place) et contribuez aux allocations familiales.'
+    },
+    {
+        id: 'chomage', nom: 'Assurance chomage', icon: '📊', pct: 6.5, color: '#2196F3',
+        desc: 'Indemnisation des demandeurs d\'emploi (Unedic)',
+        concret: 'Vous financez <strong>{jours_indem} jours d\'indemnisation</strong> chomage (allocation moyenne: ~1 200 euros/mois). 2,8 millions de beneficiaires.'
+    },
+    {
+        id: 'at_mp', nom: 'Accidents du travail', icon: '⚠️', pct: 2.0, color: '#795548',
+        desc: 'Indemnisation des accidents du travail et maladies professionnelles',
+        concret: 'Vous contribuez a la couverture de <strong>{accidents} accidents du travail</strong> par an (environ 650 000 en France).'
+    },
+    {
+        id: 'dependance', nom: 'Autonomie / Dependance', icon: '🧑‍🦽', pct: 5.0, color: '#9C27B0',
+        desc: 'APA, aide aux personnes agees et handicapees, EHPAD',
+        concret: 'Vous financez <strong>{jours_ehpad} jours en EHPAD</strong> subventionnes (cout reel: ~2 500 euros/mois dont ~1 800 pris en charge).'
+    }
+];
+
+// Collectivites locales (~280 Md)
+const BUDGET_LOCAL = [
+    {
+        id: 'ecoles_loc', nom: 'Ecoles et periscolaire', icon: '🏫', pct: 12.0, color: '#2196F3',
+        desc: 'Construction/entretien des ecoles (communes), colleges (departements), lycees (regions)',
+        concret: 'Vous contribuez a l\'entretien de <strong>{m2} m2 de batiment scolaire</strong> et au financement de la cantine, du periscolaire.'
+    },
+    {
+        id: 'voirie', nom: 'Voirie et transports locaux', icon: '🚌', pct: 14.0, color: '#673AB7',
+        desc: 'Routes departementales, bus, tramway, metro, pistes cyclables',
+        concret: 'Vous financez l\'entretien de <strong>{km} metres de voirie</strong> communale et contribuez aux transports en commun de votre agglomeration.'
+    },
+    {
+        id: 'social_loc', nom: 'Action sociale locale', icon: '🏠', pct: 22.0, color: '#FF9800',
+        desc: 'RSA (departement), aide sociale a l\'enfance, PMI, CCAS',
+        concret: 'Vous contribuez a <strong>{jours} jours d\'aide sociale</strong> departementale (protection de l\'enfance, aide aux personnes agees, RSA).'
+    },
+    {
+        id: 'eau_dechets', nom: 'Eau et dechets', icon: '💧', pct: 8.0, color: '#00BCD4',
+        desc: 'Distribution d\'eau potable, assainissement, collecte et traitement des dechets',
+        concret: 'Vous financez le traitement de <strong>{litres} litres d\'eau potable</strong> et la collecte de <strong>{kg} kg de dechets</strong>.'
+    },
+    {
+        id: 'urbanisme_loc', nom: 'Urbanisme et logement', icon: '🏗️', pct: 10.0, color: '#795548',
+        desc: 'PLU, permis de construire, logement social, renovation urbaine',
+        concret: 'Vous contribuez a la construction de <strong>{logements} logements sociaux</strong> chaque annee dans votre commune/intercommunalite.'
+    },
+    {
+        id: 'culture_sport_loc', nom: 'Culture, sport, jeunesse', icon: '📚', pct: 9.0, color: '#E91E63',
+        desc: 'Bibliotheques, piscines, stades, festivals, MJC',
+        concret: 'Vous financez <strong>{heures}h d\'ouverture</strong> de bibliotheque municipale et contribuez aux equipements sportifs et culturels.'
+    },
+    {
+        id: 'securite_loc', nom: 'Securite et incendie', icon: '🚒', pct: 5.0, color: '#F44336',
+        desc: 'Police municipale, SDIS (pompiers), prevention',
+        concret: 'Vous financez <strong>{interventions} interventions</strong> de pompiers (4,8 millions d\'interventions/an en France).'
+    },
+    {
+        id: 'admin_loc', nom: 'Administration locale', icon: '🏛️', pct: 14.0, color: '#9E9E9E',
+        desc: 'Personnel administratif, etat civil, elections, fonctionnement des mairies',
+        concret: 'Vous contribuez au fonctionnement de <strong>votre mairie</strong>, y compris les services d\'etat civil, d\'elections, et d\'accueil du public.'
+    },
+    {
+        id: 'economie_loc', nom: 'Developpement economique', icon: '💼', pct: 6.0, color: '#4CAF50',
+        desc: 'Zones d\'activite, aide aux entreprises, tourisme, formation pro (regions)',
+        concret: 'Vous contribuez au soutien de <strong>{entreprises} entreprises locales</strong> et a la formation professionnelle dans votre region.'
+    }
+];
+
+// =============================================
+// BAREMES FISCAUX 2025
+// =============================================
+
+// Tranches IR 2025 (sur revenu imposable)
+const TRANCHES_IR = [
+    { min: 0, max: 11294, taux: 0 },
+    { min: 11294, max: 28797, taux: 0.11 },
+    { min: 28797, max: 82341, taux: 0.30 },
+    { min: 82341, max: 177106, taux: 0.41 },
+    { min: 177106, max: Infinity, taux: 0.45 }
+];
+
+// Cotisations salariales (% du brut)
+const COTIS_SALARIALES = 0.225; // ~22.5% (secu, retraite, chomage, CSG/CRDS)
+// Cotisations patronales (% du brut)
+const COTIS_PATRONALES = 0.42; // ~42% en moyenne
+
+// TVA - taux moyen effectif sur la consommation
+const TVA_TAUX_MOYEN = 0.15; // taux moyen pondere (entre 5.5%, 10%, 20%)
+
+// =============================================
+// CALCULS
+// =============================================
+
+function calculerIR(revenuImposable, nbParts) {
+    const revenuParPart = revenuImposable / nbParts;
+    let impotParPart = 0;
+    for (const t of TRANCHES_IR) {
+        if (revenuParPart > t.min) {
+            const assiette = Math.min(revenuParPart, t.max) - t.min;
+            impotParPart += assiette * t.taux;
+        }
+    }
+    return Math.round(impotParPart * nbParts);
+}
+
+function getNbParts(situation, enfants) {
+    let parts = 1;
+    if (situation === 'couple' || situation === 'couple_1revenu') parts = 2;
+    if (enfants >= 1) parts += 0.5;
+    if (enfants >= 2) parts += 0.5;
+    if (enfants >= 3) parts += 1; // 3e enfant = 1 part
+    if (enfants >= 4) parts += 1; // 4e = 1 part
+    return parts;
+}
+
+function calculer() {
+    const revenuBrut = parseFloat(document.getElementById('revenu').value) || 0;
+    const statut = document.getElementById('statut').value;
+    const situation = document.getElementById('situation').value;
+    const enfants = parseInt(document.getElementById('enfants').value) || 0;
+    const loyer = parseFloat(document.getElementById('loyer').value) || 0;
+    const conso = parseFloat(document.getElementById('conso').value) || 0;
+
+    // Nombre de parts fiscales
+    const nbParts = getNbParts(situation, enfants);
+
+    // --- Cotisations sociales ---
+    let cotisationsSalariales = 0;
+    let cotisationsPatronales = 0;
+    let csg = 0;
+
+    if (statut === 'salarie' || statut === 'fonctionnaire') {
+        cotisationsSalariales = revenuBrut * COTIS_SALARIALES;
+        cotisationsPatronales = revenuBrut * COTIS_PATRONALES;
+    } else if (statut === 'independant') {
+        cotisationsSalariales = revenuBrut * 0.40; // charges TNS ~40%
+        cotisationsPatronales = 0;
+    } else if (statut === 'retraite') {
+        csg = revenuBrut * 0.091; // CSG sur pensions
+    }
+
+    // Revenu net imposable (approximation)
+    const revenuNet = revenuBrut - cotisationsSalariales;
+    const revenuImposable = revenuNet * 0.90; // abattement 10%
+
+    // --- Impot sur le revenu ---
+    let ir = 0;
+    if (statut !== 'etudiant' || revenuBrut > 5000) {
+        ir = calculerIR(revenuImposable, nbParts);
+    }
+
+    // --- TVA ---
+    const depensesAnnuelles = (conso + loyer * 0.0) * 12; // pas de TVA sur loyer
+    const tvaPayee = Math.round(conso * 12 * TVA_TAUX_MOYEN);
+
+    // --- Taxes sur carburant, tabac, alcool (estimation forfaitaire) ---
+    const taxesConso = Math.round(conso * 12 * 0.03); // ~3% de taxes indirectes hors TVA
+
+    // --- Contribution totale ---
+    const cotisationsTotales = cotisationsSalariales + cotisationsPatronales + csg;
+    const impotsTotaux = ir + tvaPayee + taxesConso;
+    const contributionTotale = Math.round(cotisationsTotales + impotsTotaux);
+
+    // Part qui va a l'Etat vs Secu vs Local
+    // Recettes Etat ~500Md / Total ~1420Md = 35%
+    // Secu ~640Md / Total = 45%
+    // Local ~280Md / Total = 20%
+    // Mais on repartit selon la nature des prelevements:
+    const versEtat = Math.round(ir + tvaPayee * 0.72 + taxesConso); // Etat garde ~72% de la TVA
+    const versSecu = Math.round(cotisationsTotales + tvaPayee * 0.10); // Secu recoit une fraction de TVA
+    const versLocal = Math.round(tvaPayee * 0.18); // Collectivites recoivent ~18% TVA + taxes locales
+
+    // Taxe fonciere / habitation estimee (si proprietaire)
+    const taxeLocale = loyer === 0 ? Math.round(revenuBrut * 0.02) : 0;
+    const versLocalTotal = versLocal + taxeLocale;
+
+    const contributionTotaleAjustee = versEtat + versSecu + versLocalTotal;
+
+    // =============================================
+    // AFFICHAGE
+    // =============================================
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('totalContrib').textContent = formatMoney(contributionTotaleAjustee);
+    document.getElementById('totalMois').textContent = formatMoney(Math.round(contributionTotaleAjustee / 12));
+
+    // Summary cards
+    const summaryHTML = `
+        <div class="summary-card">
+            <div class="amount">${formatMoney(ir)}</div>
+            <div class="label">Impot sur le revenu</div>
+        </div>
+        <div class="summary-card">
+            <div class="amount">${formatMoney(Math.round(cotisationsSalariales))}</div>
+            <div class="label">Cotisations salariales</div>
+        </div>
+        <div class="summary-card">
+            <div class="amount">${formatMoney(Math.round(cotisationsPatronales))}</div>
+            <div class="label">Cotisations patronales</div>
+        </div>
+        <div class="summary-card">
+            <div class="amount">${formatMoney(tvaPayee)}</div>
+            <div class="label">TVA</div>
+        </div>
+        <div class="summary-card">
+            <div class="amount">${formatMoney(taxesConso + taxeLocale)}</div>
+            <div class="label">Autres taxes</div>
+        </div>
+    `;
+    document.getElementById('summaryCards').innerHTML = summaryHTML;
+
+    // Budget Etat
+    renderBudgetList('budgetEtatList', BUDGET_ETAT, versEtat);
+
+    // Budget Secu
+    renderBudgetList('budgetSecuList', BUDGET_SECU, versSecu);
+
+    // Budget Local
+    renderBudgetList('budgetLocalList', BUDGET_LOCAL, versLocalTotal);
+
+    // Donut chart
+    renderDonut(versEtat, versSecu, versLocalTotal);
+
+    // Concrete equivalences
+    renderConcrete(contributionTotaleAjustee, versEtat, versSecu, versLocalTotal, enfants);
+
+    // Per day
+    renderPerDay(versEtat, versSecu, versLocalTotal);
+
+    // Balance
+    renderBalance(contributionTotaleAjustee, revenuBrut, statut, enfants, loyer);
+
+    // Scroll to results
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderBudgetList(containerId, items, totalAmount) {
+    const container = document.getElementById(containerId);
+    let html = '';
+    const maxPct = Math.max(...items.map(i => i.pct));
+
+    for (const item of items) {
+        const montant = Math.round(totalAmount * item.pct / 100);
+        const barWidth = (item.pct / maxPct * 100);
+        const montantParMois = Math.round(montant / 12);
+
+        // Generate concrete text with values
+        let concretText = item.concret;
+        const montantConcret = montant;
+        concretText = concretText.replace('{jours}', Math.max(1, Math.round(montantConcret / 24.5)));
+        concretText = concretText.replace('{heures}', Math.max(1, Math.round(montantConcret / 35)));
+        concretText = concretText.replace('{minutes}', Math.max(1, Math.round(montantConcret / 0.6)));
+        concretText = concretText.replace('{euros}', formatNumber(montantConcret));
+        concretText = concretText.replace('{soldats}', (montantConcret / 45000).toFixed(3));
+        concretText = concretText.replace('{consultations}', Math.max(1, Math.round(montantConcret / 46)));
+        concretText = concretText.replace('{jours_hosp}', (montantConcret / 2000).toFixed(1));
+        concretText = concretText.replace('{mois}', (montantConcret / 1531).toFixed(1));
+        concretText = concretText.replace('{jours_creche}', Math.max(1, Math.round(montantConcret / 83)));
+        concretText = concretText.replace('{jours_indem}', Math.max(1, Math.round(montantConcret / 40)));
+        concretText = concretText.replace('{accidents}', (montantConcret * 650000 / 13000000000).toFixed(2));
+        concretText = concretText.replace('{jours_ehpad}', Math.max(1, Math.round(montantConcret / 60)));
+        concretText = concretText.replace('{m2}', Math.max(1, Math.round(montantConcret / 40)));
+        concretText = concretText.replace('{personnes}', Math.max(1, Math.round(montantConcret / 35)));
+        concretText = concretText.replace('{entrees}', Math.max(1, Math.round(montantConcret / 15)));
+        concretText = concretText.replace('{repas}', Math.max(1, Math.round(montantConcret / 3)));
+        concretText = concretText.replace('{km}', Math.max(1, Math.round(montantConcret / 8)));
+        concretText = concretText.replace('{prisons}', (montantConcret / 35000).toFixed(3));
+        concretText = concretText.replace('{litres}', formatNumber(Math.round(montantConcret / 0.004)));
+        concretText = concretText.replace('{kg}', Math.max(1, Math.round(montantConcret / 0.25)));
+        concretText = concretText.replace('{logements}', (montantConcret / 150000).toFixed(3));
+        concretText = concretText.replace('{interventions}', (montantConcret / 100).toFixed(1));
+        concretText = concretText.replace('{entreprises}', Math.max(1, Math.round(montantConcret / 5000)));
+
+        const detailId = `detail-${containerId}-${item.id}`;
+
+        html += `
+            <div class="budget-item" onclick="toggleDetail('${detailId}')">
+                <div class="budget-icon">${item.icon}</div>
+                <div class="budget-info">
+                    <div class="budget-name">${item.nom}</div>
+                    <div class="budget-desc">${item.desc}</div>
+                    <div class="budget-bar-container">
+                        <div class="budget-bar" style="width:${barWidth}%; background:${item.color}"></div>
+                    </div>
+                </div>
+                <div class="budget-amount">
+                    <div class="money">${formatMoney(montant)}</div>
+                    <div class="percent">${item.pct}% | ${formatMoney(montantParMois)}/mois</div>
+                </div>
+            </div>
+            <div class="budget-detail" id="${detailId}">
+                <div class="concrete">${concretText}</div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+function toggleDetail(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+}
+
+function renderDonut(etat, secu, local) {
+    const total = etat + secu + local;
+    const data = [
+        { label: 'Etat (budget general)', value: etat, color: '#000091' },
+        { label: 'Protection sociale', value: secu, color: '#e1000f' },
+        { label: 'Collectivites locales', value: local, color: '#008941' }
+    ];
+
+    const svg = document.getElementById('donutChart');
+    const legend = document.getElementById('donutLegend');
+    const radius = 15.91549430919;
+    const circumference = 2 * Math.PI * radius;
+
+    let offset = 0;
+    let svgHTML = '';
+
+    // Background circle
+    svgHTML += `<circle cx="21" cy="21" r="${radius}" fill="none" stroke="#eee" stroke-width="5"/>`;
+
+    for (const d of data) {
+        const pct = d.value / total;
+        const dashLength = pct * circumference;
+        const gap = circumference - dashLength;
+        const dashOffset = circumference - offset + circumference * 0.25;
+
+        svgHTML += `<circle cx="21" cy="21" r="${radius}" fill="none"
+            stroke="${d.color}" stroke-width="5"
+            stroke-dasharray="${dashLength} ${gap}"
+            stroke-dashoffset="${dashOffset}"
+            style="transition: stroke-dasharray 0.6s"/>`;
+
+        offset += dashLength;
+    }
+
+    // Center text
+    svgHTML += `<text x="21" y="20" text-anchor="middle" font-size="3.5" font-weight="700" fill="#1e1e1e">${formatMoney(total)}</text>`;
+    svgHTML += `<text x="21" y="24" text-anchor="middle" font-size="1.8" fill="#666">total/an</text>`;
+
+    svg.innerHTML = svgHTML;
+
+    // Legend
+    let legendHTML = '';
+    for (const d of data) {
+        const pct = ((d.value / total) * 100).toFixed(1);
+        legendHTML += `
+            <div class="legend-item">
+                <div class="legend-dot" style="background:${d.color}"></div>
+                <span><strong>${pct}%</strong> ${d.label} (${formatMoney(d.value)})</span>
+            </div>
+        `;
+    }
+    legend.innerHTML = legendHTML;
+}
+
+function renderConcrete(total, etat, secu, local, enfants) {
+    const grid = document.getElementById('concreteGrid');
+
+    // Cout d'un eleve/an = 8960
+    const joursEcole = Math.round(total * 0.162 / (8960 / 365));
+    // Cout hospitalisation/jour = 2000
+    const heuresHopital = Math.round(total * 0.34 * secu / (secu + etat + local) / 2000 * 24);
+    // Km de route = ~8 euros/m/an entretien
+    const metresRoute = Math.round((etat * 0.028 + local * 0.14) / 8);
+    // Nuits hebergement urgence = ~35 euros/nuit
+    const nuitsUrgence = Math.round(etat * 0.072 / 35);
+    // Livres biblio = ~15 euros
+    const livresBiblio = Math.round(local * 0.09 / 15);
+    // Repas cantine = ~3 euros subvention
+    const repasCantine = Math.round((etat * 0.008 + local * 0.12) / 3);
+    // Jour de pension retraite
+    const joursPension = Math.round(secu * 0.45 / (1531 / 30));
+
+    const cards = [
+        { icon: '🎓', value: joursEcole, unit: 'jours', label: "de scolarite d'un eleve", detail: "Cout moyen: 8 960 euros/an" },
+        { icon: '🏥', value: heuresHopital, unit: 'heures', label: "d'hospitalisation", detail: "Cout moyen: 2 000 euros/jour" },
+        { icon: '🛣️', value: metresRoute, unit: 'metres', label: "de route entretenue", detail: "Entretien + construction" },
+        { icon: '🤝', value: nuitsUrgence, unit: 'nuits', label: "d'hebergement d'urgence", detail: "Pour les sans-abri" },
+        { icon: '📚', value: livresBiblio, unit: 'livres', label: "en bibliotheque", detail: "Achat et gestion" },
+        { icon: '🍽️', value: repasCantine, unit: 'repas', label: "de cantine subventionnes", detail: "Part collectivite" },
+        { icon: '👴', value: joursPension, unit: 'jours', label: "de pension retraite", detail: "Pension moyenne: 1 531 euros/mois" },
+        { icon: '🚒', value: Math.max(1, Math.round(local * 0.05 / 100)), unit: 'interventions', label: "de pompiers", detail: "4,8M interventions/an en France" }
+    ];
+
+    let html = '';
+    for (const c of cards) {
+        html += `
+            <div class="concrete-card">
+                <div class="icon">${c.icon}</div>
+                <div class="value">${formatNumber(c.value)}</div>
+                <div class="unit">${c.unit}</div>
+                <div class="card-label">${c.label}</div>
+                <div class="card-detail">${c.detail}</div>
+            </div>
+        `;
+    }
+    grid.innerHTML = html;
+}
+
+function renderPerDay(etat, secu, local) {
+    const total = etat + secu + local;
+    const perDay = total / 365;
+
+    const items = [
+        { icon: '🏥', amount: (perDay * secu / (etat + secu + local) * 0.34).toFixed(2), label: 'Sante' },
+        { icon: '👴', amount: (perDay * secu / (etat + secu + local) * 0.45).toFixed(2), label: 'Retraites' },
+        { icon: '🎓', amount: (perDay * etat / (etat + secu + local) * 0.162).toFixed(2), label: 'Education' },
+        { icon: '🛡️', amount: (perDay * etat / (etat + secu + local) * 0.108).toFixed(2), label: 'Defense' },
+        { icon: '🚔', amount: (perDay * etat / (etat + secu + local) * 0.046).toFixed(2), label: 'Securite' },
+        { icon: '🤝', amount: (perDay * etat / (etat + secu + local) * 0.072).toFixed(2), label: 'Solidarite' },
+        { icon: '🚌', amount: (perDay * local / (etat + secu + local) * 0.14).toFixed(2), label: 'Transports locaux' },
+        { icon: '🌿', amount: (perDay * etat / (etat + secu + local) * 0.056).toFixed(2), label: 'Ecologie' },
+    ];
+
+    let html = '';
+    for (const item of items) {
+        html += `
+            <div class="per-day-item">
+                <div class="icon">${item.icon}</div>
+                <div class="amount">${item.amount} euros</div>
+                <div class="label">${item.label}</div>
+            </div>
+        `;
+    }
+    document.getElementById('perDayGrid').innerHTML = html;
+}
+
+function renderBalance(contribution, revenuBrut, statut, enfants, loyer) {
+    // Estimation des services recus (moyenne par habitant)
+    // Depense publique totale ~1420 Md / 68M habitants = ~20 880 euros/habitant
+    const depenseParHab = 20880;
+
+    let servicesRecus = depenseParHab;
+
+    // Ajustements selon la situation
+    if (enfants > 0) {
+        servicesRecus += enfants * 8960; // scolarite par enfant
+        servicesRecus += enfants * 1500; // allocations familiales estimees
+    }
+
+    if (statut === 'chomeur') {
+        servicesRecus += 14400; // ARE moyenne
+    }
+
+    if (statut === 'retraite') {
+        servicesRecus += 18000; // pension moyenne
+    }
+
+    if (statut === 'etudiant') {
+        servicesRecus += 11000; // cout d'un etudiant
+    }
+
+    // APL estimee
+    if (loyer > 0 && revenuBrut < 30000) {
+        servicesRecus += Math.min(loyer * 12 * 0.4, 3000);
+    }
+
+    // Sante (moyenne)
+    servicesRecus += 3500; // depense sante moyenne par habitant
+
+    const maxBar = Math.max(contribution, servicesRecus);
+
+    let verdictClass, verdictText, verdictDetail;
+
+    if (contribution > servicesRecus * 1.2) {
+        verdictClass = 'negative';
+        verdictText = `Vous etes contributeur net : vous contribuez ${formatMoney(contribution - servicesRecus)} de plus que la moyenne des services recus.`;
+        verdictDetail = "C'est le principe de solidarite : les plus hauts revenus financent davantage de services collectifs qu'ils n'en consomment directement. Cela permet de financer l'education, la sante et les infrastructures pour tous.";
+    } else if (servicesRecus > contribution * 1.2) {
+        verdictClass = 'positive';
+        verdictText = `Vous etes beneficiaire net : vous recevez environ ${formatMoney(servicesRecus - contribution)} de plus en services que votre contribution directe.`;
+        verdictDetail = "Le systeme de redistribution fonctionne en votre faveur. Les services publics (education, sante, infrastructure) dont vous beneficiez sont en partie finances par la solidarite nationale.";
+    } else {
+        verdictClass = 'neutral';
+        verdictText = "Votre contribution et les services recus sont globalement equilibres.";
+        verdictDetail = "Vous contribuez a peu pres autant que ce que vous recevez en services publics. C'est le cas d'une grande partie de la classe moyenne.";
+    }
+
+    const html = `
+        <div class="balance-bar">
+            <div class="label">Vous contribuez</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:${(contribution/maxBar*100)}%; background: var(--blue)">
+                    ${formatMoney(contribution)}
+                </div>
+            </div>
+        </div>
+        <div class="balance-bar">
+            <div class="label">Vous recevez*</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:${(servicesRecus/maxBar*100)}%; background: var(--green)">
+                    ${formatMoney(servicesRecus)}
+                </div>
+            </div>
+        </div>
+        <div class="balance-verdict ${verdictClass}">
+            <div class="verdict-text">${verdictText}</div>
+            <div class="verdict-detail">${verdictDetail}</div>
+        </div>
+        <p style="font-size:0.75rem; color:#999; margin-top:1rem; text-align:center;">
+            * Estimation basee sur la depense publique moyenne par habitant (${formatMoney(depenseParHab)}/an) ajustee selon votre situation.
+            Inclut services directs (sante, education) et indirects (infrastructure, securite, recherche).
+        </p>
+    `;
+
+    document.getElementById('balanceContent').innerHTML = html;
+}
+
+// =============================================
+// HELPERS
+// =============================================
+
+function formatMoney(n) {
+    if (n === undefined || isNaN(n)) return '0 euros';
+    return n.toLocaleString('fr-FR') + ' \u20AC';
+}
+
+function formatNumber(n) {
+    return n.toLocaleString('fr-FR');
+}
+
+// Auto-calculate on load with default values
+window.addEventListener('DOMContentLoaded', () => {
+    calculer();
+});
+</script>
+
+</body>
+</html>
