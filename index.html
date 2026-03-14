@@ -285,6 +285,16 @@
                     <div class="hint">CA HT encaisse sur l'annee</div>
                     <input type="number" id="ca" placeholder="ex: 50000" value="0">
                 </div>
+                <div class="form-group conditional" id="grp_cotis_tns">
+                    <label for="cotis_tns_reelles">Cotisations TNS reellement payees</label>
+                    <div class="hint">Montant annuel URSSAF/SSI (si connu). Laissez 0 pour estimation auto a ~45%</div>
+                    <input type="number" id="cotis_tns_reelles" placeholder="ex: 52000" value="0">
+                </div>
+                <div class="form-group conditional" id="grp_rem_nette_declaree">
+                    <label for="rem_nette_declaree">Ou : remuneration nette declaree (art. 62)</label>
+                    <div class="hint">Montant sur l'avis d'imposition "revenus des associes et gerants". Le brut sera recalcule.</div>
+                    <input type="number" id="rem_nette_declaree" placeholder="ex: 119547" value="0">
+                </div>
             </div>
             <h3>Revenus du capital</h3>
             <div class="form-grid">
@@ -714,7 +724,10 @@ function applyAvisData(d) {
     if (d.revenusGerant > 0) {
         document.getElementById('statut').value = 'gerant_maj_sarl';
         // L'avis montre le montant NET de cotisations TNS (art. 62 CGI)
-        // Brut estime ≈ net / 0.55 ≈ net * 1.82
+        // On remplit le champ "remuneration nette declaree" pour laisser
+        // le simulateur recalculer avec les cotisations reelles si fournies
+        setVal('rem_nette_declaree', d.revenusGerant);
+        // Estimation brut par defaut (sera ecrase si cotis reelles fournies)
         setVal('remuneration', Math.round(d.revenusGerant * 1.82));
     } else if (d.pensionsRetraite > 0) {
         document.getElementById('statut').value = 'retraite';
@@ -761,7 +774,8 @@ function showFeedback(id, d) {
     const fb = document.getElementById(id);
     fb.classList.add('visible');
     const lines = [];
-    if (d.revenusGerant) lines.push('<strong>Revenus gerant art. 62</strong> : ' + fmtMoney(d.revenusGerant) + ' net → brut estime <strong>' + fmtMoney(Math.round(d.revenusGerant * 1.82)) + '</strong>');
+    if (d.revenusGerant) lines.push('<strong>Revenus gerant art. 62</strong> : ' + fmtMoney(d.revenusGerant) + ' net de cotisations' +
+        '<br><em style="color:#795548">→ Brut estime ~' + fmtMoney(Math.round(d.revenusGerant * 1.82)) + ' (estimation a 45% cotis). Pour un calcul exact, renseignez vos cotisations TNS reelles dans l\'onglet "Saisie manuelle".</em>');
     if (d.traitementsSalaires) lines.push('<strong>Salaires</strong> : ' + fmtMoney(d.traitementsSalaires));
     if (d.pensionsRetraite) lines.push('Pensions retraite : ' + fmtMoney(d.pensionsRetraite));
     if (d.revenusPFU) lines.push('<strong>Revenus au PFU 12.8%</strong> : ' + fmtMoney(d.revenusPFU));
@@ -894,8 +908,11 @@ function setVal(id, val) { document.getElementById(id).value = Math.round(val); 
 function updateFormVisibility() {
     const statut = document.getElementById('statut').value;
     const isMicro = statut.startsWith('micro_');
+    const isTNS = ['gerant_maj_sarl', 'independant_reel', 'liberal'].includes(statut);
     toggle('grp_ca', isMicro);
     toggle('grp_capital_social', statut === 'gerant_maj_sarl' || statut === 'president_sas');
+    toggle('grp_cotis_tns', isTNS);
+    toggle('grp_rem_nette_declaree', isTNS);
     const lblRem = document.querySelector('#grp_remuneration label');
     const hintRem = document.getElementById('hint_rem');
     const labels = {
@@ -949,20 +966,42 @@ function calculer() {
     const S = id => document.getElementById(id).value;
 
     const statut = S('statut'), situation = S('situation'), enfants = parseInt(S('enfants')) || 0;
-    const rem = V('remuneration'), ca = V('ca'), div = V('dividendes'), capSoc = V('capital_social') || 10000;
+    let rem = V('remuneration'), ca = V('ca'), div = V('dividendes'), capSoc = V('capital_social') || 10000;
     const inter = V('interets'), pvMob = V('pv_mobilieres'), optBar = S('option_bareme');
     const revFonc = V('revenus_fonciers'), regFonc = S('regime_foncier'), chgFonc = V('charges_foncieres');
     const revMeub = V('revenus_meubles'), pvImmo = V('pv_immo');
     const loyer = V('loyer'), conso = V('conso');
+    const cotisReelles = V('cotis_tns_reelles');
+    const remNetteDec = V('rem_nette_declaree');
 
     const nbParts = getNbParts(situation, enfants);
     const isMicro = statut.startsWith('micro_');
+    const isTNS = ['gerant_maj_sarl', 'independant_reel', 'liberal'].includes(statut);
     const cfg = COTISATIONS[statut] || {};
+
+    // Pour les TNS: si on a la remuneration nette declaree (avis IR) et les cotis reelles,
+    // on peut calculer le brut exact: brut = net_declare + cotis_reelles
+    if (isTNS && remNetteDec > 0 && cotisReelles > 0) {
+        rem = remNetteDec + cotisReelles;
+        document.getElementById('remuneration').value = Math.round(rem);
+    } else if (isTNS && remNetteDec > 0 && cotisReelles === 0) {
+        // On a que le net declare -> estimation brut
+        rem = Math.round(remNetteDec * 1.82);
+        document.getElementById('remuneration').value = rem;
+    }
 
     // 1. Cotisations activite
     let cSal = 0, cPat = 0, cTNS = 0, cMicro = 0, csgAct = 0, revNet = 0;
     if (cfg.salariales !== undefined) { cSal = rem * cfg.salariales; cPat = rem * cfg.patronales; revNet = rem - cSal; }
-    else if (cfg.tns !== undefined) { cTNS = rem * cfg.tns; revNet = rem - cTNS; }
+    else if (cfg.tns !== undefined) {
+        // Si cotisations reelles fournies, on les utilise au lieu de l'estimation
+        if (isTNS && cotisReelles > 0) {
+            cTNS = cotisReelles;
+        } else {
+            cTNS = rem * cfg.tns;
+        }
+        revNet = rem - cTNS;
+    }
     else if (cfg.taux_ca !== undefined) {
         cMicro = ca * cfg.taux_ca; revNet = ca * (1 - (MICRO_ABATTEMENTS[statut] || 0.34));
         if (rem > 0) { cSal = rem * 0.225; cPat = rem * 0.42; revNet += rem - cSal; }
