@@ -556,8 +556,10 @@ function switchTab(tab) {
 // =============================================
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// Extract text from PDF - LINE-AWARE: groups text items by Y position
-// so table rows stay together (critical for avis d'imposition)
+// Extract text from PDF - LINE + COLUMN AWARE
+// Groups text items by Y position (lines), then separates columns
+// using | when there's a large X gap between items.
+// This prevents "119547" (Déclar.1) and "2955" (Déclar.2) from merging.
 async function extractPdfText(file) {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -565,54 +567,68 @@ async function extractPdfText(file) {
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        // Group items by Y coordinate (same line)
         const lineMap = {};
         for (const item of content.items) {
             if (!item.str.trim()) continue;
-            const y = Math.round(item.transform[5]); // Y position
-            const x = item.transform[4]; // X position
+            const y = Math.round(item.transform[5]);
+            const x = item.transform[4];
+            const w = item.width || item.str.length * 5; // estimated width
             if (!lineMap[y]) lineMap[y] = [];
-            lineMap[y].push({ x, text: item.str.trim() });
+            lineMap[y].push({ x, w, text: item.str.trim() });
         }
-        // Sort lines by Y (descending = top to bottom), items by X (left to right)
         const sortedYs = Object.keys(lineMap).map(Number).sort((a, b) => b - a);
         for (const y of sortedYs) {
             const items = lineMap[y].sort((a, b) => a.x - b.x);
-            allLines.push(items.map(it => it.text).join(' '));
+            // Join items: use | as column separator when gap > 30px
+            let line = items[0].text;
+            for (let k = 1; k < items.length; k++) {
+                const gap = items[k].x - (items[k-1].x + items[k-1].w);
+                line += (gap > 30 ? ' | ' : ' ') + items[k].text;
+            }
+            allLines.push(line);
         }
     }
     return allLines.join('\n');
 }
 
-// Find an amount: search for label pattern, then find the first significant number
-// within the same line or next few lines
+// Find an amount: search for label, then extract the LAST number
+// from the last column cell (= Total column in multi-column tables)
 function findAmount(text, patterns, minVal = 10) {
     const lines = text.split('\n');
     for (const p of patterns) {
         const labelRegex = new RegExp(p, 'i');
         for (let i = 0; i < lines.length; i++) {
             if (!labelRegex.test(lines[i])) continue;
-            // Search this line and next 2 lines for a number
+            // Search this line and next 2 lines
             for (let j = i; j < Math.min(i + 3, lines.length); j++) {
                 const line = lines[j];
-                // Extract all numbers from the line
-                const nums = [];
-                const numRegex = /(-?\d[\d\s]*(?:[,.]\d{1,2})?)/g;
-                let m;
-                while ((m = numRegex.exec(line)) !== null) {
-                    const raw = m[1].replace(/\s/g, '').replace(',', '.');
-                    const val = parseFloat(raw);
-                    if (!isNaN(val) && Math.abs(val) >= minVal) nums.push(Math.abs(val));
+                // Split by column separator |
+                const cells = line.split('|').map(c => c.trim());
+                // For same line: look at the LAST cell with a number (= Total column)
+                // For subsequent lines: look at first cell with a number
+                const searchCells = (j === i) ? [...cells].reverse() : cells;
+                for (const cell of searchCells) {
+                    const val = extractNumber(cell, minVal);
+                    if (val !== null) return val;
                 }
-                // On the same line as label: take the LAST significant number
-                // (usually the "Total" column on the right)
-                if (j === i && nums.length > 0) return nums[nums.length - 1];
-                // On subsequent lines: take the first significant number
-                if (j > i && nums.length > 0) return nums[0];
             }
         }
     }
     return 0;
+}
+
+// Extract a number from a cell string. Handles "119 547" (thousand sep)
+// and "3,00" (decimal). Returns null if no valid number found.
+function extractNumber(cell, minVal = 10) {
+    // Match numbers: digits with optional spaces as thousand separators, optional decimal
+    const numRegex = /(-?\d{1,3}(?:\s?\d{3})*(?:[,.]\d{1,2})?)/g;
+    let m, best = null;
+    while ((m = numRegex.exec(cell)) !== null) {
+        const raw = m[1].replace(/\s/g, '').replace(',', '.');
+        const val = parseFloat(raw);
+        if (!isNaN(val) && Math.abs(val) >= minVal) best = Math.abs(val);
+    }
+    return best;
 }
 
 // Special finder for small values like nbParts (3.00)
@@ -627,13 +643,11 @@ function findAllAmounts(text, patterns, minVal = 100) {
         const labelRegex = new RegExp(p, 'i');
         for (let i = 0; i < lines.length; i++) {
             if (!labelRegex.test(lines[i])) continue;
+            const cells = lines[i].split('|').map(c => c.trim());
             const nums = [];
-            const numRegex = /(-?\d[\d\s]*(?:[,.]\d{1,2})?)/g;
-            let m;
-            while ((m = numRegex.exec(lines[i])) !== null) {
-                const raw = m[1].replace(/\s/g, '').replace(',', '.');
-                const val = parseFloat(raw);
-                if (!isNaN(val) && Math.abs(val) >= minVal) nums.push(Math.abs(val));
+            for (const cell of cells) {
+                const val = extractNumber(cell, minVal);
+                if (val !== null) nums.push(val);
             }
             if (nums.length > 0) return nums;
         }
