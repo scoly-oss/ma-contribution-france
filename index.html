@@ -570,11 +570,13 @@ async function extractPdfText(file) {
 
 function findAmount(text, patterns) {
     for (const p of patterns) {
-        const regex = new RegExp(p + '[\\s:]*([\\d\\s,.]+)', 'i');
+        // Handle dots/periods between label and number (e.g. "Salaires............................. 119547")
+        const regex = new RegExp(p + '[\\s.:…]*[\\s:]*(-?[\\d\\s,.]+)', 'i');
         const m = text.match(regex);
         if (m) {
-            const val = parseFloat(m[1].replace(/\s/g, '').replace(',', '.'));
-            if (!isNaN(val) && val > 0) return val;
+            const raw = m[1].replace(/\s/g, '').replace(',', '.');
+            const val = parseFloat(raw);
+            if (!isNaN(val) && val !== 0) return Math.abs(val);
         }
     }
     return 0;
@@ -600,39 +602,94 @@ async function handleAvisUpload(file) {
 }
 
 function parseAvisIR(text) {
+    // Normalize text: collapse multiple spaces, handle special chars
+    const t = text.replace(/\.\.\./g, ' ').replace(/\.{2,}/g, ' ');
+
     return {
-        revenuBrutGlobal: findAmount(text, ['revenu brut global', 'rev\\.? brut global', 'total des revenus bruts']),
-        revenuImposable: findAmount(text, ['revenu net imposable', 'rev\\.? net imposable', 'revenu imposable']),
-        irNet: findAmount(text, ['impot sur le revenu net', 'imp[oô]t net', 'montant de.*imp[oô]t', 'imp[oô]t sur les revenus']),
-        traitementsSalaires: findAmount(text, ['traitements.*salaires', 'salaires.*traitements', '1AJ', 'total.*salaires']),
-        rcm: findAmount(text, ['revenus.*capitaux mobiliers', 'rev\\.? cap\\.? mob', '2DC', '2TR']),
-        revenusFonciers: findAmount(text, ['revenus fonciers', 'rev\\.? fonciers', '4BA', '4BE']),
-        plusValues: findAmount(text, ['plus-values', 'plus values', '3VG']),
-        nbParts: findAmount(text, ['nombre de parts', 'nb\\.? parts', 'parts fiscales']),
-        rfr: findAmount(text, ['revenu fiscal.*reference', 'RFR', 'revenu fiscal de reference']),
-        csgDeductible: findAmount(text, ['CSG d[eé]ductible', '6DE']),
-        pensionsRetraite: findAmount(text, ['pensions.*retraites', '1AS']),
+        revenuBrutGlobal: findAmount(t, ['revenu brut global', 'rev\\.? brut global']),
+        revenuImposable: findAmount(t, ['revenu imposable', 'rev\\.? net imposable', 'revenu net imposable']),
+        irNet: findAmount(t, ['total de l.imp[oô]t sur le revenu net', 'imp[oô]t sur le revenu net', 'imp[oô]t net']),
+        // Salaires classiques (1AJ)
+        traitementsSalaires: findAmount(t, ['total des salaires et assimil[eé]s', 'salaires et assimil[eé]s', 'traitements.*salaires', '1AJ']),
+        // Revenus art. 62 (gerants associes SARL)
+        revenusGerant: findAmount(t, ['revenus des associ[eé]s et g[eé]rants', 'associ[eé]s.*g[eé]rants', 'r[eé]mun[eé]ration.*g[eé]ran']),
+        // Revenus au PFU (flat tax 12.8%) = dividendes + interets + PV au forfaitaire
+        revenusPFU: findAmount(t, ['revenus au taux forfaitaire', 'taux forfaitaire']),
+        // RCM specifiques
+        rcm: findAmount(t, ['revenus.*capitaux mobiliers', 'rev\\.? cap\\.? mob', '2DC', '2TR']),
+        // Plus-values (prelevements sociaux section)
+        plusValues: findAmount(t, ['plus-values et gains divers', 'plus-values', 'plus values', '3VG']),
+        revenusFonciers: findAmount(t, ['revenus fonciers', 'rev\\.? fonciers', '4BA', '4BE']),
+        nbParts: findAmount(t, ['nombre de parts', 'nb\\.? de parts', 'parts fiscales']),
+        rfr: findAmount(t, ['revenu fiscal de r[eé]f[eé]rence', 'revenu fiscal.*r[eé]f[eé]rence', 'RFR']),
+        csgDeductible: findAmount(t, ['CSG d[eé]ductible', '6DE']),
+        pensionsRetraite: findAmount(t, ['pensions.*retraites', '1AS']),
+        // IR details
+        irBareme: findAmount(t, ['imp[oô]t sur les revenus soumis au bar[eè]me', 'revenus soumis au bar[eè]me']),
+        irProportionnel: findAmount(t, ['imp[oô]t proportionnel']),
+        irAvantCredits: findAmount(t, ['imp[oô]t total avant cr[eé]dits']),
+        // Prelevements sociaux
+        psTotal: findAmount(t, ['total des pr[eé]l[eè]vements sociaux nets', 'pr[eé]l[eè]vements sociaux nets']),
+        // Situation du foyer
+        situationFoyer: /situation du foyer[^M]*M\b/i.test(t) ? 'marie' :
+                         /situation du foyer[^PO]*P/i.test(t) ? 'pacse' : 'celibataire',
+        enfantsMineurs: findAmount(t, ['enfants mineurs ou handicap[eé]s']),
     };
 }
 
 function applyAvisData(d) {
-    if (d.traitementsSalaires > 0) setVal('remuneration', d.traitementsSalaires);
-    if (d.rcm > 0) {
-        // Repartir les RCM entre dividendes et interets (approximation)
+    // 1. Detect statut from income types
+    if (d.revenusGerant > 0) {
+        // Art. 62 CGI - gerant majoritaire SARL
+        document.getElementById('statut').value = 'gerant_maj_sarl';
+        // Le montant sur l'avis est NET de cotisations TNS. Pour le simulateur on a besoin du brut.
+        // Approximation: brut = net / (1 - taux_cotis). Taux TNS ~45% mais la base est la remuneration + cotis,
+        // donc en pratique net ≈ brut * 0.55, soit brut ≈ net / 0.55
+        // Mais plus simple: on prend le montant declare tel quel comme "remuneration nette de cotis"
+        // et on laisse le simulateur recalculer. Pour etre precis, on utilise le brut ≈ declare * 1.82
+        setVal('remuneration', Math.round(d.revenusGerant * 1.82));
+    } else if (d.pensionsRetraite > 0) {
+        document.getElementById('statut').value = 'retraite';
+        setVal('remuneration', d.pensionsRetraite);
+    } else if (d.traitementsSalaires > 0) {
+        // Salaries classiques - le montant sur l'avis est le brut
+        setVal('remuneration', d.traitementsSalaires);
+    }
+
+    // 2. Revenus du capital
+    if (d.revenusPFU > 0) {
+        // Revenus soumis au PFU = dividendes + interets + PV au forfaitaire
+        // On les met en PV mobilieres par defaut (le PFU est deja selectionne)
+        setVal('pv_mobilieres', d.revenusPFU);
+    } else if (d.plusValues > 0) {
+        setVal('pv_mobilieres', d.plusValues);
+    }
+    if (d.rcm > 0 && d.revenusPFU === 0) {
         setVal('dividendes', Math.round(d.rcm * 0.7));
         setVal('interets', Math.round(d.rcm * 0.3));
     }
+
+    // 3. Revenus fonciers
     if (d.revenusFonciers > 0) setVal('revenus_fonciers', d.revenusFonciers);
-    if (d.plusValues > 0) setVal('pv_mobilieres', d.plusValues);
-    if (d.pensionsRetraite > 0) {
-        setVal('remuneration', d.pensionsRetraite);
-        document.getElementById('statut').value = 'retraite';
+
+    // 4. Situation familiale
+    if (d.situationFoyer === 'marie' || d.situationFoyer === 'pacse') {
+        document.getElementById('situation').value = 'couple';
     }
     if (d.nbParts > 0) {
-        if (d.nbParts >= 2) document.getElementById('situation').value = 'couple';
-        const enfParts = d.nbParts - (d.nbParts >= 2 ? 2 : 1);
-        if (enfParts >= 1) document.getElementById('enfants').value = Math.min(4, Math.round(enfParts * 2)).toString();
+        const partsBase = (d.situationFoyer === 'marie' || d.situationFoyer === 'pacse') ? 2 : 1;
+        const enfParts = d.nbParts - partsBase;
+        // 0.5 par enfant pour les 2 premiers, 1 a partir du 3eme
+        let nbEnf = 0;
+        if (enfParts >= 0.5) nbEnf = 1;
+        if (enfParts >= 1) nbEnf = 2;
+        if (enfParts >= 2) nbEnf = 3;
+        if (enfParts >= 3) nbEnf = 4;
+        document.getElementById('enfants').value = Math.min(4, nbEnf).toString();
+    } else if (d.enfantsMineurs > 0) {
+        document.getElementById('enfants').value = Math.min(4, d.enfantsMineurs).toString();
     }
+
     updateFormVisibility();
 }
 
@@ -640,14 +697,21 @@ function showFeedback(id, d) {
     const fb = document.getElementById(id);
     fb.classList.add('visible');
     const lines = [];
+    if (d.revenusGerant) lines.push('Revenus gerant art. 62 : ' + fmtMoney(d.revenusGerant) + ' (brut estime : ' + fmtMoney(Math.round(d.revenusGerant * 1.82)) + ')');
     if (d.traitementsSalaires) lines.push('Salaires/traitements : ' + fmtMoney(d.traitementsSalaires));
     if (d.pensionsRetraite) lines.push('Pensions retraite : ' + fmtMoney(d.pensionsRetraite));
+    if (d.revenusPFU) lines.push('Revenus au PFU (12.8%) : ' + fmtMoney(d.revenusPFU));
+    if (d.plusValues) lines.push('PV (base PS) : ' + fmtMoney(d.plusValues));
     if (d.rcm) lines.push('Revenus capitaux mobiliers : ' + fmtMoney(d.rcm));
     if (d.revenusFonciers) lines.push('Revenus fonciers : ' + fmtMoney(d.revenusFonciers));
-    if (d.plusValues) lines.push('Plus-values : ' + fmtMoney(d.plusValues));
-    if (d.revenuImposable) lines.push('Revenu net imposable : ' + fmtMoney(d.revenuImposable));
+    if (d.revenuBrutGlobal) lines.push('Revenu brut global : ' + fmtMoney(d.revenuBrutGlobal));
+    if (d.revenuImposable) lines.push('Revenu imposable : ' + fmtMoney(d.revenuImposable));
+    if (d.irBareme) lines.push('IR bareme : ' + fmtMoney(d.irBareme));
+    if (d.irProportionnel) lines.push('IR proportionnel (PFU) : ' + fmtMoney(d.irProportionnel));
     if (d.irNet) lines.push('IR net : ' + fmtMoney(d.irNet));
-    if (d.nbParts) lines.push('Parts fiscales : ' + d.nbParts);
+    if (d.psTotal) lines.push('Prelevements sociaux : ' + fmtMoney(d.psTotal));
+    if (d.nbParts) lines.push('Parts : ' + d.nbParts);
+    if (d.situationFoyer && d.situationFoyer !== 'celibataire') lines.push('Situation : ' + d.situationFoyer);
     if (d.rfr) lines.push('RFR : ' + fmtMoney(d.rfr));
     if (lines.length === 0) lines.push('Aucune donnee reconnue. Verifiez les champs manuellement.');
     fb.querySelector('#' + id + 'Content').innerHTML = lines.join('<br>');
@@ -704,10 +768,16 @@ async function handleBilanUpload(file) {
         const fb = document.getElementById('feedbackBilan');
         fb.classList.add('visible');
         const lines = [];
+        if (d.formeJuridique) lines.push('Forme juridique : ' + d.formeJuridique.toUpperCase());
         if (d.ca) lines.push('Chiffre d\'affaires : ' + fmtMoney(d.ca));
-        if (d.resultat) lines.push('Resultat : ' + fmtMoney(d.resultat));
-        if (d.masseSalariale) lines.push('Masse salariale : ' + fmtMoney(d.masseSalariale));
+        if (d.resultat) lines.push('Resultat de l\'exercice : ' + fmtMoney(d.resultat));
+        if (d.masseSalariale) lines.push('Salaires et traitements : ' + fmtMoney(d.masseSalariale));
+        if (d.chargesSociales) lines.push('Charges sociales : ' + fmtMoney(d.chargesSociales));
+        if (d.impotsTaxes) lines.push('Impots et taxes : ' + fmtMoney(d.impotsTaxes));
+        if (d.is) lines.push('IS : ' + fmtMoney(d.is));
         if (d.effectif) lines.push('Effectif : ' + d.effectif);
+        if (d.capital) lines.push('Capital : ' + fmtMoney(d.capital));
+        if (d.ca) lines.push('<em style="color:var(--blue)">TVA collectee estimee (20%) : ' + fmtMoney(Math.round(d.ca * 0.20)) + '</em>');
         if (lines.length === 0) lines.push('Aucune donnee reconnue. Saisissez manuellement.');
         document.getElementById('feedbackBilanContent').innerHTML = lines.join('<br>');
         setTimeout(() => calculer(), 100);
@@ -715,11 +785,18 @@ async function handleBilanUpload(file) {
 }
 
 function parseBilan(text) {
+    const t = text.replace(/\.\.\./g, ' ').replace(/\.{2,}/g, ' ');
     return {
-        ca: findAmount(text, ['chiffre d.affaires', 'CA net', 'total.*produits.*exploitation', 'FL', 'ventes.*marchandises']),
-        resultat: findAmount(text, ['r[eé]sultat.*exercice', 'r[eé]sultat net', 'b[eé]n[eé]fice.*exercice', 'HN', 'resultat courant']),
-        masseSalariale: findAmount(text, ['masse salariale', 'salaires.*traitements', 'charges.*personnel', 'FY']),
-        effectif: findAmount(text, ['effectif', 'nombre.*salari[eé]s', 'YP']),
+        ca: findAmount(t, ['MONTANT NET DU CHIFFRE D.AFFAIRES', 'chiffre d.affaires', 'CA net', 'production vendue']),
+        resultat: findAmount(t, ['R[EÉeé]SULTAT DE L.EXERCICE', 'r[eé]sultat de l.exercice', 'r[eé]sultat net comptable', 'r[eé]sultat net']),
+        masseSalariale: findAmount(t, ['salaires et traitements', 'masse salariale', 'charges.*personnel', 'salaires.*traitements']),
+        chargesSociales: findAmount(t, ['charges sociales', 'cotisations sociales']),
+        impotsTaxes: findAmount(t, ['imp[oô]ts.*taxes.*versements', 'imp[oô]ts et taxes']),
+        is: findAmount(t, ['imp[oô]ts sur les b[eé]n[eé]fices']),
+        totalChargesExploit: findAmount(t, ['TOTAL CHARGES D.EXPLOITATION', 'total des charges d.exploitation']),
+        capital: findAmount(t, ['Capital[\\s:]']),
+        effectif: findAmount(t, ['effectif moyen', 'nombre.*salari[eé]s', 'effectif']),
+        formeJuridique: /SARL/i.test(t) ? 'sarl' : /SAS/i.test(t) ? 'sas' : /SA\b/i.test(t) ? 'sa' : '',
     };
 }
 
@@ -728,6 +805,20 @@ function applyBilanData(d) {
     if (d.resultat) setVal('ent_resultat', d.resultat);
     if (d.masseSalariale) setVal('ent_masse_sal', d.masseSalariale);
     if (d.effectif) setVal('ent_nb_salaries', d.effectif);
+    if (d.formeJuridique) document.getElementById('ent_forme').value = d.formeJuridique;
+    if (d.capital) setVal('capital_social', d.capital);
+
+    // Auto-estimate TVA from CA (services = 20%)
+    if (d.ca > 0) {
+        const tvaCollEstimee = Math.round(d.ca * 0.20);
+        setVal('ent_tva_collectee', tvaCollEstimee);
+        // TVA deductible: estimate from charges externes si disponible
+        // Sinon ~40% du CA en charges externes * 20%
+        const chargesExt = d.totalChargesExploit ?
+            Math.max(0, d.totalChargesExploit - (d.masseSalariale || 0) - (d.chargesSociales || 0) - (d.impotsTaxes || 0)) :
+            d.ca * 0.40;
+        setVal('ent_tva_deductible', Math.round(chargesExt * 0.20));
+    }
 }
 
 function setVal(id, val) { document.getElementById(id).value = Math.round(val); }
