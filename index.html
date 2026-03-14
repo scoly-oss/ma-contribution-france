@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma Contribution France - A quoi servent mes impots ?</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
             --blue: #000091;
@@ -25,289 +26,146 @@
             line-height: 1.6;
         }
 
-        header {
-            background: var(--blue);
-            color: white;
-            padding: 1.5rem 2rem;
-            text-align: center;
-        }
-
+        header { background: var(--blue); color: white; padding: 1.5rem 2rem; text-align: center; }
         header h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
         header p { opacity: 0.85; font-size: 0.95rem; }
 
-        .tricolore {
-            height: 4px;
-            background: linear-gradient(to right, var(--blue) 33%, white 33%, white 66%, var(--red) 66%);
-        }
-
+        .tricolore { height: 4px; background: linear-gradient(to right, var(--blue) 33%, white 33%, white 66%, var(--red) 66%); }
         .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
 
-        .intro {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border-left: 4px solid var(--blue);
-        }
-
+        .intro { background: var(--card); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--blue); }
         .intro p { font-size: 0.95rem; color: var(--muted); }
+
+        /* TABS */
+        .tabs { display: flex; gap: 0; margin-bottom: 0; }
+        .tab-btn {
+            flex: 1; padding: 1rem; text-align: center; background: var(--card); border: 1px solid var(--border);
+            border-bottom: none; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit;
+            color: var(--muted); transition: all 0.2s; border-radius: 8px 8px 0 0;
+        }
+        .tab-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+        .tab-btn:hover:not(.active) { background: #f0f0ff; color: var(--blue); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* FORM */
         .form-section {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: var(--card); border-radius: 0 0 8px 8px; padding: 2rem;
+            margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border); border-top: none;
         }
-
         .form-section h2 { color: var(--blue); margin-bottom: 1.5rem; font-size: 1.3rem; }
         .form-section h3 { color: var(--blue); margin: 1.5rem 0 1rem; font-size: 1.05rem; border-bottom: 2px solid var(--bg); padding-bottom: 0.5rem; }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.2rem;
-        }
-
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-weight: 600; margin-bottom: 0.3rem; font-size: 0.88rem; }
         .form-group .hint { font-size: 0.76rem; color: var(--muted); margin-bottom: 0.3rem; }
-
         .form-group input, .form-group select {
-            padding: 0.65rem;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 0.95rem;
-            font-family: inherit;
+            padding: 0.65rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; font-family: inherit;
         }
-
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: var(--blue);
-            box-shadow: 0 0 0 2px rgba(0,0,145,0.15);
-        }
-
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(0,0,145,0.15); }
         .conditional { display: none; }
         .conditional.visible { display: flex; }
 
         .btn-calculer {
-            display: block;
-            width: 100%;
-            max-width: 400px;
-            margin: 2rem auto 0;
-            padding: 1rem;
-            background: var(--blue);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
+            display: block; width: 100%; max-width: 400px; margin: 2rem auto 0; padding: 1rem;
+            background: var(--blue); color: white; border: none; border-radius: 6px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit;
         }
-
         .btn-calculer:hover { background: #1212a0; }
+
+        /* UPLOAD ZONE */
+        .upload-zone {
+            border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center;
+            cursor: pointer; transition: all 0.2s; background: #fafafa; margin-bottom: 1.5rem;
+        }
+        .upload-zone:hover, .upload-zone.dragover { border-color: var(--blue); background: #f0f0ff; }
+        .upload-zone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .upload-zone .label { font-weight: 600; font-size: 0.95rem; }
+        .upload-zone .hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+        .upload-zone input[type=file] { display: none; }
+        .upload-zone.loaded { border-color: var(--green); background: #e8f5e9; }
+        .upload-zone.loaded .label { color: var(--green); }
+
+        .upload-feedback {
+            background: #e8f5e9; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;
+            border-left: 4px solid var(--green); font-size: 0.85rem; display: none;
+        }
+        .upload-feedback.visible { display: block; }
+        .upload-feedback .title { font-weight: 700; color: var(--green); margin-bottom: 0.3rem; }
+
+        .privacy-note {
+            background: #fff8e1; border-radius: 6px; padding: 0.8rem; font-size: 0.78rem;
+            color: #795548; border-left: 4px solid #ffc107; margin-bottom: 1.5rem;
+        }
 
         /* RESULTS */
         #results { display: none; }
-
         .results-header {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem;
+            text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
-
         .results-header h2 { color: var(--blue); font-size: 1.4rem; margin-bottom: 1rem; }
-
         .big-number { font-size: 2.8rem; font-weight: 800; color: var(--blue); }
         .big-number-label { font-size: 0.95rem; color: var(--muted); margin-bottom: 1rem; }
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; margin-top: 1.5rem; }
+        .summary-card { background: var(--bg); border-radius: 6px; padding: 0.8rem; text-align: center; }
+        .summary-card .amount { font-size: 1.1rem; font-weight: 700; }
+        .summary-card .label { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
 
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 0.8rem;
-            margin-top: 1.5rem;
+        /* ENTREPRISE SECTION */
+        .entreprise-results {
+            background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #ff6f00;
         }
+        .entreprise-results h2 { color: #ff6f00; font-size: 1.3rem; margin-bottom: 0.3rem; }
+        .entreprise-results .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
 
-        .summary-card {
-            background: var(--bg);
-            border-radius: 6px;
-            padding: 0.8rem;
-            text-align: center;
-        }
-
-        .summary-card .amount { font-size: 1.2rem; font-weight: 700; color: var(--text); }
-        .summary-card .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
-
-        /* DETAIL FISCAL */
-        .fiscal-detail {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
+        /* FISCAL TABLE */
+        .fiscal-detail { background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .fiscal-detail h2 { color: var(--blue); font-size: 1.3rem; margin-bottom: 1rem; }
-
-        .fiscal-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-
-        .fiscal-table th {
-            text-align: left;
-            padding: 0.6rem;
-            background: var(--bg);
-            font-weight: 600;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .fiscal-table td {
-            padding: 0.5rem 0.6rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        .fiscal-table .cat-header td {
-            background: #f0f0ff;
-            font-weight: 600;
-            color: var(--blue);
-            padding-top: 0.8rem;
-        }
-
-        .fiscal-table .total td {
-            font-weight: 700;
-            border-top: 2px solid var(--blue);
-            background: #f8f8ff;
-        }
-
+        .fiscal-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .fiscal-table th { text-align: left; padding: 0.6rem; background: var(--bg); font-weight: 600; border-bottom: 2px solid var(--border); }
+        .fiscal-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #eee; }
+        .fiscal-table .cat-header td { background: #f0f0ff; font-weight: 600; color: var(--blue); padding-top: 0.8rem; }
+        .fiscal-table .total td { font-weight: 700; border-top: 2px solid var(--blue); background: #f8f8ff; }
         .fiscal-table td.right { text-align: right; font-variant-numeric: tabular-nums; }
-
-        .pfu-comparison {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #fff8e1;
-            border-radius: 6px;
-            border-left: 4px solid #ffc107;
-            font-size: 0.85rem;
-        }
+        .pfu-comparison { margin-top: 1rem; padding: 1rem; background: #fff8e1; border-radius: 6px; border-left: 4px solid #ffc107; font-size: 0.85rem; }
 
         /* BUDGET */
-        .budget-section {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
+        .budget-section { background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .budget-section h2 { color: var(--blue); font-size: 1.3rem; margin-bottom: 0.5rem; }
         .budget-section .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
-
-        .budget-item {
-            display: flex;
-            align-items: center;
-            padding: 0.7rem 0.5rem;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.15s;
-            border-radius: 4px;
-        }
-
+        .budget-item { display: flex; align-items: center; padding: 0.7rem 0.5rem; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.15s; border-radius: 4px; }
         .budget-item:hover { background: #f0f0ff; }
-        .budget-item:last-child { border-bottom: none; }
-
         .budget-icon { font-size: 1.5rem; width: 38px; text-align: center; flex-shrink: 0; }
-
         .budget-info { flex: 1; margin-left: 0.7rem; }
         .budget-name { font-weight: 600; font-size: 0.9rem; }
         .budget-desc { font-size: 0.75rem; color: var(--muted); }
-
         .budget-bar-container { width: 100%; height: 5px; background: #eee; border-radius: 3px; margin-top: 0.25rem; }
         .budget-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-
         .budget-amount { text-align: right; flex-shrink: 0; margin-left: 0.8rem; }
         .budget-amount .money { font-weight: 700; font-size: 0.95rem; }
         .budget-amount .percent { font-size: 0.72rem; color: var(--muted); }
-
-        .budget-detail {
-            display: none;
-            background: #f8f8ff;
-            border-radius: 6px;
-            padding: 0.8rem 0.8rem 0.8rem 3.2rem;
-            margin-bottom: 0.4rem;
-            font-size: 0.82rem;
-            line-height: 1.7;
-        }
-
+        .budget-detail { display: none; background: #f8f8ff; border-radius: 6px; padding: 0.8rem 0.8rem 0.8rem 3.2rem; margin-bottom: 0.4rem; font-size: 0.82rem; line-height: 1.7; }
         .budget-detail.open { display: block; }
-
-        .budget-detail .concrete {
-            padding: 0.6rem;
-            background: white;
-            border-radius: 4px;
-            border-left: 3px solid var(--blue);
-        }
-
+        .budget-detail .concrete { padding: 0.6rem; background: white; border-radius: 4px; border-left: 3px solid var(--blue); }
         .budget-detail .concrete strong { color: var(--blue); }
 
         /* CHART */
-        .chart-container {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
+        .chart-container { background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .chart-container h2 { color: var(--blue); font-size: 1.3rem; margin-bottom: 1.5rem; }
-
-        .donut-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-
+        .donut-wrapper { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
         .donut-svg { width: 260px; height: 260px; }
-
         .donut-legend { display: flex; flex-direction: column; gap: 0.4rem; }
         .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
         .legend-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
 
         /* CONCRETE */
-        .concrete-section {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
+        .concrete-section { background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .concrete-section h2 { color: var(--blue); font-size: 1.3rem; margin-bottom: 0.3rem; }
         .concrete-section .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
-
-        .concrete-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .concrete-card {
-            background: var(--bg);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            transition: transform 0.15s;
-        }
-
+        .concrete-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .concrete-card { background: var(--bg); border-radius: 8px; padding: 1rem; text-align: center; transition: transform 0.15s; }
         .concrete-card:hover { transform: translateY(-2px); }
         .concrete-card .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
         .concrete-card .value { font-size: 1.5rem; font-weight: 800; color: var(--blue); }
@@ -316,58 +174,22 @@
         .concrete-card .card-detail { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
 
         /* PER DAY */
-        .per-day-section {
-            background: linear-gradient(135deg, #000091, #1212b0);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            color: white;
-        }
-
+        .per-day-section { background: linear-gradient(135deg, #000091, #1212b0); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; color: white; }
         .per-day-section h2 { font-size: 1.3rem; margin-bottom: 1.5rem; }
-
-        .per-day-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 0.8rem;
-        }
-
-        .per-day-item {
-            text-align: center;
-            padding: 0.7rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: 6px;
-        }
-
+        .per-day-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.8rem; }
+        .per-day-item { text-align: center; padding: 0.7rem; background: rgba(255,255,255,0.1); border-radius: 6px; }
         .per-day-item .icon { font-size: 1.4rem; }
         .per-day-item .amount { font-size: 1.2rem; font-weight: 700; }
         .per-day-item .label { font-size: 0.72rem; opacity: 0.85; }
 
         /* BALANCE */
-        .balance-section {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
+        .balance-section { background: var(--card); border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .balance-section h2 { color: var(--blue); font-size: 1.3rem; margin-bottom: 0.3rem; }
         .balance-section .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
-
         .balance-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; }
         .balance-bar .label { font-size: 0.82rem; font-weight: 600; width: 110px; flex-shrink: 0; }
-
-        .balance-bar .bar-bg {
-            flex: 1; height: 26px; background: #eee; border-radius: 4px; position: relative; overflow: hidden;
-        }
-
-        .balance-bar .bar-fill {
-            height: 100%; border-radius: 4px; display: flex; align-items: center;
-            justify-content: flex-end; padding-right: 8px; font-size: 0.75rem;
-            font-weight: 700; color: white; transition: width 0.6s;
-        }
-
+        .balance-bar .bar-bg { flex: 1; height: 26px; background: #eee; border-radius: 4px; position: relative; overflow: hidden; }
+        .balance-bar .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 0.75rem; font-weight: 700; color: white; transition: width 0.6s; min-width: 80px; }
         .balance-verdict { text-align: center; padding: 1.2rem; border-radius: 8px; margin-top: 1rem; }
         .balance-verdict.positive { background: #e8f5e9; border: 1px solid #a5d6a7; }
         .balance-verdict.negative { background: #fff3e0; border: 1px solid #ffcc80; }
@@ -375,18 +197,9 @@
         .balance-verdict .verdict-text { font-size: 0.95rem; font-weight: 600; }
         .balance-verdict .verdict-detail { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
 
-        /* METHODOLOGY */
-        .methodology {
-            background: var(--card);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
-
+        .methodology { background: var(--card); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--border); }
         .methodology summary { cursor: pointer; font-weight: 600; color: var(--blue); }
         .methodology .content { margin-top: 1rem; font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
-
         footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.8rem; }
         footer a { color: var(--blue); }
 
@@ -394,10 +207,10 @@
             header h1 { font-size: 1.3rem; }
             .big-number { font-size: 2rem; }
             .container { padding: 1rem 0.7rem; }
-            .form-section, .budget-section, .chart-container,
-            .concrete-section, .per-day-section, .balance-section,
-            .fiscal-detail { padding: 1.2rem; }
-            .fiscal-table { font-size: 0.78rem; }
+            .tabs { flex-direction: column; }
+            .tab-btn { border-radius: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--border); }
+            .form-section, .budget-section, .chart-container, .concrete-section, .per-day-section, .balance-section, .fiscal-detail, .entreprise-results { padding: 1.2rem; }
+            .fiscal-table { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -412,144 +225,181 @@
 <div class="container">
     <div class="intro">
         <p>Chaque annee, vous payez des impots, des cotisations sociales et des taxes. Mais savez-vous concretement ce que cela finance ?
-        Remplissez vos informations ci-dessous pour decouvrir la repartition exacte de votre contribution au fonctionnement de la France.</p>
+        Remplissez vos informations ou importez vos documents fiscaux pour decouvrir la repartition exacte de votre contribution.</p>
     </div>
 
-    <!-- FORMULAIRE -->
-    <div class="form-section">
-        <h2>Votre situation</h2>
+    <!-- ONGLETS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('manual')">Saisie manuelle</button>
+        <button class="tab-btn" onclick="switchTab('import')">Importer mes documents</button>
+        <button class="tab-btn" onclick="switchTab('entreprise')">Mon entreprise</button>
+    </div>
 
-        <h3>Profil et foyer fiscal</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="statut">Statut professionnel</label>
-                <select id="statut" onchange="updateFormVisibility()">
-                    <option value="salarie">Salarie(e) du prive</option>
-                    <option value="fonctionnaire">Fonctionnaire</option>
-                    <option value="gerant_maj_sarl">Gerant majoritaire SARL/EURL (TNS)</option>
-                    <option value="president_sas">President SAS/SASU (assimile salarie)</option>
-                    <option value="micro_bic_vente">Micro-entrepreneur - Vente (BIC)</option>
-                    <option value="micro_bic_service">Micro-entrepreneur - Services (BIC)</option>
-                    <option value="micro_bnc">Micro-entrepreneur - Liberal (BNC)</option>
-                    <option value="independant_reel">Independant / TNS (regime reel)</option>
-                    <option value="liberal">Profession liberale (BNC reel)</option>
-                    <option value="retraite">Retraite(e)</option>
-                    <option value="chomeur">Demandeur d'emploi</option>
-                    <option value="etudiant">Etudiant(e)</option>
-                </select>
+    <!-- TAB 1 : SAISIE MANUELLE -->
+    <div class="tab-content active" id="tab-manual">
+        <div class="form-section">
+            <h2>Votre situation</h2>
+            <h3>Profil et foyer fiscal</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="statut">Statut professionnel</label>
+                    <select id="statut" onchange="updateFormVisibility()">
+                        <option value="salarie">Salarie(e) du prive</option>
+                        <option value="fonctionnaire">Fonctionnaire</option>
+                        <option value="gerant_maj_sarl">Gerant majoritaire SARL/EURL (TNS)</option>
+                        <option value="president_sas">President SAS/SASU (assimile salarie)</option>
+                        <option value="micro_bic_vente">Micro-entrepreneur - Vente (BIC)</option>
+                        <option value="micro_bic_service">Micro-entrepreneur - Services (BIC)</option>
+                        <option value="micro_bnc">Micro-entrepreneur - Liberal (BNC)</option>
+                        <option value="independant_reel">Independant / TNS (regime reel)</option>
+                        <option value="liberal">Profession liberale (BNC reel)</option>
+                        <option value="retraite">Retraite(e)</option>
+                        <option value="chomeur">Demandeur d'emploi</option>
+                        <option value="etudiant">Etudiant(e)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="situation">Situation familiale</label>
+                    <select id="situation">
+                        <option value="celibataire">Celibataire</option>
+                        <option value="couple">En couple (mariage/PACS)</option>
+                        <option value="couple_1revenu">En couple, 1 seul revenu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="enfants">Nombre d'enfants a charge</label>
+                    <select id="enfants">
+                        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4+</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="situation">Situation familiale</label>
-                <select id="situation">
-                    <option value="celibataire">Celibataire</option>
-                    <option value="couple">En couple (mariage/PACS)</option>
-                    <option value="couple_1revenu">En couple, 1 seul revenu</option>
-                </select>
+            <h3>Revenus d'activite</h3>
+            <div class="form-grid">
+                <div class="form-group" id="grp_remuneration">
+                    <label for="remuneration">Remuneration annuelle brute</label>
+                    <div class="hint" id="hint_rem">Salaire brut annuel ou remuneration de gerance</div>
+                    <input type="number" id="remuneration" placeholder="ex: 35000" value="35000">
+                </div>
+                <div class="form-group conditional" id="grp_ca">
+                    <label for="ca">Chiffre d'affaires annuel</label>
+                    <div class="hint">CA HT encaisse sur l'annee</div>
+                    <input type="number" id="ca" placeholder="ex: 50000" value="0">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="enfants">Nombre d'enfants a charge</label>
-                <select id="enfants">
-                    <option value="0">0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4+</option>
-                </select>
+            <h3>Revenus du capital</h3>
+            <div class="form-grid">
+                <div class="form-group"><label for="dividendes">Dividendes recus</label><div class="hint">Montant brut annuel</div><input type="number" id="dividendes" placeholder="ex: 10000" value="0"></div>
+                <div class="form-group conditional" id="grp_capital_social"><label for="capital_social">Capital social de la societe</label><div class="hint">Seuil 10% cotisations SARL</div><input type="number" id="capital_social" placeholder="ex: 10000" value="10000"></div>
+                <div class="form-group"><label for="interets">Interets (hors Livret A)</label><div class="hint">Comptes a terme, obligations...</div><input type="number" id="interets" placeholder="ex: 500" value="0"></div>
+                <div class="form-group"><label for="pv_mobilieres">Plus-values mobilieres</label><div class="hint">Cessions titres, actions, crypto</div><input type="number" id="pv_mobilieres" placeholder="ex: 5000" value="0"></div>
+                <div class="form-group"><label for="option_bareme">Regime revenus du capital</label><div class="hint">PFU = regime par defaut</div>
+                    <select id="option_bareme"><option value="pfu">PFU / Flat tax (31,4%)</option><option value="bareme">Bareme progressif (abatt. 40% div.)</option></select>
+                </div>
             </div>
+            <h3>Revenus fonciers et immobiliers</h3>
+            <div class="form-grid">
+                <div class="form-group"><label for="revenus_fonciers">Revenus fonciers bruts</label><div class="hint">Loyers percus (location nue)</div><input type="number" id="revenus_fonciers" placeholder="ex: 12000" value="0"></div>
+                <div class="form-group conditional" id="grp_regime_foncier"><label for="regime_foncier">Regime foncier</label>
+                    <select id="regime_foncier"><option value="micro">Micro-foncier (abatt. 30%)</option><option value="reel">Regime reel</option></select>
+                </div>
+                <div class="form-group conditional" id="grp_charges_foncieres"><label for="charges_foncieres">Charges deductibles</label><div class="hint">Interets, travaux, assurance...</div><input type="number" id="charges_foncieres" placeholder="ex: 5000" value="0"></div>
+                <div class="form-group"><label for="revenus_meubles">Location meublee (BIC)</label><div class="hint">Recettes LMNP/LMP</div><input type="number" id="revenus_meubles" placeholder="ex: 15000" value="0"></div>
+                <div class="form-group"><label for="pv_immo">Plus-values immobilieres nettes</label><div class="hint">Apres abattements detention</div><input type="number" id="pv_immo" placeholder="ex: 0" value="0"></div>
+            </div>
+            <h3>Consommation et logement</h3>
+            <div class="form-grid">
+                <div class="form-group"><label for="loyer">Loyer mensuel</label><div class="hint">0 si proprietaire</div><input type="number" id="loyer" placeholder="ex: 800" value="0"></div>
+                <div class="form-group"><label for="conso">Depenses mensuelles</label><div class="hint">Alimentation, transport, loisirs...</div><input type="number" id="conso" placeholder="ex: 1500" value="1500"></div>
+            </div>
+            <button class="btn-calculer" onclick="calculer()">Calculer ma contribution</button>
         </div>
+    </div>
 
-        <h3>Revenus d'activite</h3>
-        <div class="form-grid">
-            <div class="form-group" id="grp_remuneration">
-                <label for="remuneration">Remuneration annuelle brute</label>
-                <div class="hint" id="hint_rem">Salaire brut annuel ou remuneration de gerance</div>
-                <input type="number" id="remuneration" placeholder="ex: 35000" value="35000">
+    <!-- TAB 2 : IMPORT DOCUMENTS -->
+    <div class="tab-content" id="tab-import">
+        <div class="form-section">
+            <h2>Importez vos documents fiscaux</h2>
+
+            <div class="privacy-note">
+                <strong>Confidentialite :</strong> Tous vos documents sont traites localement dans votre navigateur. Aucune donnee n'est envoyee a un serveur. Rien n'est stocke.
             </div>
-            <div class="form-group conditional" id="grp_ca">
-                <label for="ca">Chiffre d'affaires annuel</label>
-                <div class="hint">CA HT encaisse sur l'annee</div>
-                <input type="number" id="ca" placeholder="ex: 50000" value="0">
+
+            <h3>Avis d'imposition sur le revenu</h3>
+            <div class="upload-zone" id="uploadAvis" onclick="document.getElementById('fileAvis').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleAvisUpload(event.dataTransfer.files[0])">
+                <div class="icon">📄</div>
+                <div class="label">Deposez votre avis d'imposition (PDF)</div>
+                <div class="hint">Avis d'IR disponible sur impots.gouv.fr > Documents</div>
+                <input type="file" id="fileAvis" accept=".pdf" onchange="handleAvisUpload(this.files[0])">
             </div>
+            <div class="upload-feedback" id="feedbackAvis">
+                <div class="title">Donnees extraites de votre avis d'imposition</div>
+                <div id="feedbackAvisContent"></div>
+            </div>
+
+            <h3>Bulletins de paie (optionnel)</h3>
+            <div class="upload-zone" id="uploadPaie" onclick="document.getElementById('filePaie').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handlePaieUpload(event.dataTransfer.files[0])">
+                <div class="icon">💰</div>
+                <div class="label">Deposez un bulletin de paie (PDF)</div>
+                <div class="hint">Pour affiner les cotisations salariales et patronales</div>
+                <input type="file" id="filePaie" accept=".pdf" onchange="handlePaieUpload(this.files[0])">
+            </div>
+            <div class="upload-feedback" id="feedbackPaie">
+                <div class="title">Donnees extraites du bulletin de paie</div>
+                <div id="feedbackPaieContent"></div>
+            </div>
+
+            <button class="btn-calculer" onclick="calculer()">Calculer ma contribution</button>
         </div>
+    </div>
 
-        <h3>Revenus du capital</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="dividendes">Dividendes recus</label>
-                <div class="hint">Montant brut annuel des dividendes percus</div>
-                <input type="number" id="dividendes" placeholder="ex: 10000" value="0">
+    <!-- TAB 3 : ENTREPRISE -->
+    <div class="tab-content" id="tab-entreprise">
+        <div class="form-section">
+            <h2>Contribution via votre entreprise</h2>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem">En tant que chef d'entreprise, votre societe contribue aussi massivement a l'effort collectif : IS, TVA collectee, cotisations patronales sur les salaries, CFE, CVAE, taxes sur les salaires...</p>
+
+            <div class="privacy-note">
+                <strong>Confidentialite :</strong> Toutes les donnees sont traitees localement. Vous pouvez aussi saisir les montants manuellement ci-dessous.
             </div>
-            <div class="form-group conditional" id="grp_capital_social">
-                <label for="capital_social">Capital social de votre societe</label>
-                <div class="hint">Pour calculer le seuil de 10% (cotisations SARL)</div>
-                <input type="number" id="capital_social" placeholder="ex: 10000" value="10000">
+
+            <h3>Import des documents comptables (optionnel)</h3>
+            <div class="upload-zone" id="uploadBilan" onclick="document.getElementById('fileBilan').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleBilanUpload(event.dataTransfer.files[0])">
+                <div class="icon">📊</div>
+                <div class="label">Deposez votre bilan / liasse fiscale / compte de resultat (PDF)</div>
+                <div class="hint">Liasse fiscale (2050-2059), bilan comptable, FEC...</div>
+                <input type="file" id="fileBilan" accept=".pdf,.txt,.csv" onchange="handleBilanUpload(this.files[0])">
             </div>
-            <div class="form-group">
-                <label for="interets">Interets et livrets (hors Livret A)</label>
-                <div class="hint">Interets d'obligations, comptes a terme, etc.</div>
-                <input type="number" id="interets" placeholder="ex: 500" value="0">
+            <div class="upload-feedback" id="feedbackBilan">
+                <div class="title">Donnees extraites de votre bilan</div>
+                <div id="feedbackBilanContent"></div>
             </div>
-            <div class="form-group">
-                <label for="pv_mobilieres">Plus-values mobilieres</label>
-                <div class="hint">Gains nets sur cessions de titres, actions, crypto</div>
-                <input type="number" id="pv_mobilieres" placeholder="ex: 5000" value="0">
+
+            <h3>Donnees de votre entreprise</h3>
+            <div class="form-grid">
+                <div class="form-group"><label for="ent_forme">Forme juridique</label>
+                    <select id="ent_forme">
+                        <option value="sarl">SARL / EURL</option>
+                        <option value="sas">SAS / SASU</option>
+                        <option value="sa">SA</option>
+                        <option value="ei">Entreprise individuelle (hors micro)</option>
+                        <option value="sci">SCI</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="ent_ca">Chiffre d'affaires HT annuel</label><div class="hint">CA total de l'entreprise</div><input type="number" id="ent_ca" placeholder="ex: 500000" value="0"></div>
+                <div class="form-group"><label for="ent_resultat">Resultat avant impot</label><div class="hint">Benefice (ou perte) avant IS</div><input type="number" id="ent_resultat" placeholder="ex: 80000" value="0"></div>
+                <div class="form-group"><label for="ent_masse_sal">Masse salariale brute annuelle</label><div class="hint">Total des salaires bruts (hors dirigeant)</div><input type="number" id="ent_masse_sal" placeholder="ex: 200000" value="0"></div>
+                <div class="form-group"><label for="ent_nb_salaries">Nombre de salaries</label><input type="number" id="ent_nb_salaries" placeholder="ex: 5" value="0"></div>
+                <div class="form-group"><label for="ent_tva_collectee">TVA collectee annuelle</label><div class="hint">TVA facturee aux clients</div><input type="number" id="ent_tva_collectee" placeholder="ex: 100000" value="0"></div>
+                <div class="form-group"><label for="ent_tva_deductible">TVA deductible annuelle</label><div class="hint">TVA payee aux fournisseurs</div><input type="number" id="ent_tva_deductible" placeholder="ex: 40000" value="0"></div>
+                <div class="form-group"><label for="ent_cfe">CFE (Cotisation Fonciere des Entreprises)</label><input type="number" id="ent_cfe" placeholder="ex: 1500" value="0"></div>
+                <div class="form-group"><label for="ent_cvae">CVAE (si CA > 500K euros)</label><input type="number" id="ent_cvae" placeholder="ex: 0" value="0"></div>
+                <div class="form-group"><label for="ent_taxe_apprentissage">Taxe d'apprentissage</label><div class="hint">0.68% de la masse salariale</div><input type="number" id="ent_taxe_apprentissage" placeholder="auto" value="0"></div>
+                <div class="form-group"><label for="ent_formation">Contribution formation pro</label><div class="hint">Variable selon taille</div><input type="number" id="ent_formation" placeholder="auto" value="0"></div>
+                <div class="form-group"><label for="ent_effort_construction">Effort de construction (PEEC)</label><div class="hint">0.45% si 50+ salaries</div><input type="number" id="ent_effort_construction" placeholder="auto" value="0"></div>
             </div>
-            <div class="form-group">
-                <label for="option_bareme">Regime d'imposition des revenus du capital</label>
-                <div class="hint">Le PFU (flat tax) est le regime par defaut</div>
-                <select id="option_bareme">
-                    <option value="pfu">PFU / Flat tax (31,4% en 2026)</option>
-                    <option value="bareme">Option bareme progressif (abattement 40% dividendes)</option>
-                </select>
-            </div>
+
+            <button class="btn-calculer" onclick="calculer()">Calculer la contribution totale</button>
         </div>
-
-        <h3>Revenus fonciers et immobiliers</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="revenus_fonciers">Revenus fonciers bruts</label>
-                <div class="hint">Loyers percus (location nue). 0 si aucun bien loue</div>
-                <input type="number" id="revenus_fonciers" placeholder="ex: 12000" value="0">
-            </div>
-            <div class="form-group conditional" id="grp_regime_foncier">
-                <label for="regime_foncier">Regime foncier</label>
-                <select id="regime_foncier">
-                    <option value="micro">Micro-foncier (abattement 30%, max 15 000 euros)</option>
-                    <option value="reel">Regime reel (deduction des charges)</option>
-                </select>
-            </div>
-            <div class="form-group conditional" id="grp_charges_foncieres">
-                <label for="charges_foncieres">Charges deductibles (regime reel)</label>
-                <div class="hint">Interets emprunt, travaux, assurance, taxe fonciere...</div>
-                <input type="number" id="charges_foncieres" placeholder="ex: 5000" value="0">
-            </div>
-            <div class="form-group">
-                <label for="revenus_meubles">Revenus location meublee (BIC)</label>
-                <div class="hint">Recettes LMNP / LMP annuelles</div>
-                <input type="number" id="revenus_meubles" placeholder="ex: 15000" value="0">
-            </div>
-            <div class="form-group">
-                <label for="pv_immo">Plus-values immobilieres nettes</label>
-                <div class="hint">Apres abattements pour duree de detention</div>
-                <input type="number" id="pv_immo" placeholder="ex: 0" value="0">
-            </div>
-        </div>
-
-        <h3>Consommation et logement</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="loyer">Loyer mensuel (si locataire)</label>
-                <div class="hint">0 si proprietaire</div>
-                <input type="number" id="loyer" placeholder="ex: 800" value="0">
-            </div>
-            <div class="form-group">
-                <label for="conso">Depenses mensuelles</label>
-                <div class="hint">Alimentation, transport, loisirs, etc.</div>
-                <input type="number" id="conso" placeholder="ex: 1500" value="1500">
-            </div>
-        </div>
-
-        <button class="btn-calculer" onclick="calculer()">Calculer ma contribution</button>
     </div>
 
     <!-- RESULTATS -->
@@ -558,12 +408,21 @@
             <h2>Votre contribution totale annuelle</h2>
             <div class="big-number" id="totalContrib">-</div>
             <div class="big-number-label">par an, soit <strong id="totalMois">-</strong> / mois</div>
+            <div id="totalEntrepriseNote" style="display:none;margin-top:0.5rem;font-size:0.85rem;color:var(--muted)"></div>
             <div class="summary-cards" id="summaryCards"></div>
+        </div>
+
+        <!-- ENTREPRISE -->
+        <div class="entreprise-results" id="entrepriseResults" style="display:none">
+            <h2>Contribution de votre entreprise</h2>
+            <div class="subtitle">En plus de votre contribution personnelle, votre entreprise contribue directement</div>
+            <table class="fiscal-table" id="entrepriseTable"></table>
+            <div id="entrepriseConcrete" style="margin-top:1.5rem"></div>
         </div>
 
         <!-- DETAIL FISCAL -->
         <div class="fiscal-detail">
-            <h2>Detail de vos prelevements par categorie de revenu</h2>
+            <h2>Detail de vos prelevements personnels par categorie</h2>
             <table class="fiscal-table" id="fiscalTable"></table>
             <div id="pfuComparison"></div>
         </div>
@@ -577,74 +436,28 @@
             </div>
         </div>
 
-        <!-- BUDGET ETAT -->
-        <div class="budget-section">
-            <h2>Budget de l'Etat - Ou va votre impot sur le revenu et la TVA</h2>
-            <div class="subtitle">Cliquez sur un poste pour voir le detail concret</div>
-            <div id="budgetEtatList"></div>
-        </div>
+        <div class="budget-section"><h2>Budget de l'Etat</h2><div class="subtitle">Cliquez sur un poste pour le detail</div><div id="budgetEtatList"></div></div>
+        <div class="budget-section"><h2>Protection sociale</h2><div class="subtitle">Securite sociale, retraite, chomage, famille</div><div id="budgetSecuList"></div></div>
+        <div class="budget-section"><h2>Collectivites locales</h2><div class="subtitle">Region, departement, commune</div><div id="budgetLocalList"></div></div>
 
-        <!-- SECU -->
-        <div class="budget-section">
-            <h2>Protection sociale - Ou vont vos cotisations</h2>
-            <div class="subtitle">Securite sociale, retraite, chomage, famille</div>
-            <div id="budgetSecuList"></div>
-        </div>
+        <div class="concrete-section"><h2>Concretement, votre contribution finance...</h2><div class="subtitle">Equivalences rapportees a votre contribution</div><div class="concrete-grid" id="concreteGrid"></div></div>
+        <div class="per-day-section"><h2>Chaque jour, vous financez...</h2><div class="per-day-grid" id="perDayGrid"></div></div>
+        <div class="balance-section"><h2>Votre balance contributeur / beneficiaire</h2><div class="subtitle">Estimation des services recus en retour</div><div id="balanceContent"></div></div>
 
-        <!-- COLLECTIVITES -->
-        <div class="budget-section">
-            <h2>Collectivites locales - Region, departement, commune</h2>
-            <div class="subtitle">Finances par la taxe fonciere, CFE, dotations de l'Etat, et une part de TVA</div>
-            <div id="budgetLocalList"></div>
-        </div>
-
-        <!-- CONCRET -->
-        <div class="concrete-section">
-            <h2>Concretement, votre contribution finance...</h2>
-            <div class="subtitle">Equivalences concretes rapportees a votre contribution personnelle</div>
-            <div class="concrete-grid" id="concreteGrid"></div>
-        </div>
-
-        <!-- PAR JOUR -->
-        <div class="per-day-section">
-            <h2>Chaque jour, vous financez...</h2>
-            <div class="per-day-grid" id="perDayGrid"></div>
-        </div>
-
-        <!-- BALANCE -->
-        <div class="balance-section">
-            <h2>Votre balance contributeur / beneficiaire</h2>
-            <div class="subtitle">Estimation de ce que vous recevez en retour de la collectivite</div>
-            <div id="balanceContent"></div>
-        </div>
-
-        <!-- METHODOLOGIE -->
         <details class="methodology">
             <summary>Methodologie et sources</summary>
             <div class="content">
-                <p><strong>Sources des donnees :</strong></p>
+                <p><strong>Sources :</strong></p>
                 <ul>
-                    <li>Budget general de l'Etat (LFI 2025/2026) - environ 500 Md euros de depenses</li>
-                    <li>Budget de la Securite sociale (PLFSS 2025/2026) - environ 640 Md euros</li>
-                    <li>Budgets des collectivites locales (DGCL) - environ 280 Md euros</li>
-                    <li>Bareme IR 2026 (revenus 2025) : tranches indexees +0.9%</li>
-                    <li>PFU 2026 : 31.4% (12.8% IR + 18.6% PS) - art. 200 A du CGI</li>
-                    <li>Cotisations TNS : ~45% de la remuneration (URSSAF)</li>
-                    <li>Cotisations assimile salarie : ~80% du brut (salarial + patronal, hors chomage)</li>
-                    <li>Micro-entrepreneur : taux 2026 URSSAF (12.3% vente, 21.2% services BIC, 25.6% liberal BNC)</li>
-                    <li>Dividendes SARL : cotisations TNS au-dela de 10% du capital social (art. L131-6 CSS)</li>
-                    <li>Revenus fonciers : micro-foncier (abattement 30%, plafond 15 000 euros) ou reel</li>
-                    <li>BOFIP, Service-public.fr, economie.gouv.fr</li>
+                    <li>Budget de l'Etat (LFI 2025/2026) ~500 Md euros | Securite sociale (PLFSS) ~640 Md | Collectivites (DGCL) ~280 Md</li>
+                    <li>Bareme IR 2026 (revenus 2025) indexe +0.9% | PFU 31.4% (art. 200 A CGI)</li>
+                    <li>IS : 15% jusqu'a 42 500 euros, 25% au-dela (art. 219 CGI)</li>
+                    <li>Cotisations patronales ~42% (URSSAF) | TNS ~45% | Micro: 12.3-25.6% sur CA</li>
+                    <li>CFE, CVAE, taxe apprentissage (0.68%), formation pro, PEEC</li>
+                    <li>Dividendes SARL : cotisations TNS >10% capital (art. L131-6 CSS)</li>
                 </ul>
-                <p style="margin-top:0.8rem"><strong>Limites :</strong></p>
-                <ul>
-                    <li>Les calculs sont des estimations simplifiees a vocation pedagogique</li>
-                    <li>Les cotisations patronales sont incluses car elles font partie du cout du travail</li>
-                    <li>La TVA est estimee sur la base des depenses declarees (taux moyen pondere ~15%)</li>
-                    <li>Les services recus (balance) sont des moyennes nationales par habitant</li>
-                    <li>La decote, le plafonnement du QF, et la CEHR ne sont pas modelises en detail</li>
-                </ul>
-                <p style="margin-top:0.8rem"><strong>Ce simulateur est un outil pedagogique, pas un calculateur fiscal officiel.</strong></p>
+                <p style="margin-top:0.5rem"><strong>Import PDF :</strong> Le parsing extrait les montants par mots-cles (revenu imposable, IR, salaires, etc.). Les resultats doivent etre verifies. Tout est traite dans votre navigateur (aucun envoi serveur).</p>
+                <p style="margin-top:0.5rem"><strong>Ce simulateur est un outil pedagogique, pas un calculateur fiscal officiel.</strong></p>
             </div>
         </details>
     </div>
@@ -652,13 +465,12 @@
 
 <footer>
     <p>Ma Contribution France - Outil pedagogique open source</p>
-    <p>Donnees basees sur les budgets publics 2025-2026 | <a href="https://github.com/scoly-oss/ma-contribution-france">Code source</a></p>
+    <p>Donnees budgets publics 2025-2026 | <a href="https://github.com/scoly-oss/ma-contribution-france">Code source</a></p>
 </footer>
 
 <script>
 // =============================================
-// BAREME IR 2026 (revenus 2025) - indexe +0.9%
-// Source: service-public.fr, LFI 2026
+// CONSTANTES FISCALES
 // =============================================
 const TRANCHES_IR = [
     { min: 0, max: 11600, taux: 0 },
@@ -668,836 +480,608 @@ const TRANCHES_IR = [
     { min: 181917, max: Infinity, taux: 0.45 }
 ];
 
-// PFU 2026 : 12.8% IR + 18.6% PS = 31.4%
-const PFU_IR = 0.128;
-const PFU_PS = 0.186;
-const PFU_TOTAL = PFU_IR + PFU_PS;
-
-// Prelevements sociaux sur revenus du patrimoine (hors PFU)
-const PS_PATRIMOINE = 0.186; // 2026: CSG 10.6% + CRDS 0.5% + PS 7.5%
-
-// CSG deductible en cas d'option bareme
-const CSG_DEDUCTIBLE = 0.068; // 6.8%
-
-// Abattement 40% dividendes si option bareme
-const ABATTEMENT_DIVIDENDES = 0.40;
-
-// =============================================
-// COTISATIONS PAR STATUT
-// =============================================
-const COTISATIONS = {
-    // Salarie du prive
-    salarie: { salariales: 0.225, patronales: 0.42 },
-    // Fonctionnaire (pas de chomage, regime CNRACL)
-    fonctionnaire: { salariales: 0.21, patronales: 0.38 },
-    // Gerant majoritaire SARL = TNS
-    gerant_maj_sarl: { tns: 0.45 },
-    // President SAS = assimile salarie (pas de chomage)
-    president_sas: { salariales: 0.22, patronales: 0.42 },
-    // Micro-entrepreneur (taux sur CA)
-    micro_bic_vente: { taux_ca: 0.123 },
-    micro_bic_service: { taux_ca: 0.212 },
-    micro_bnc: { taux_ca: 0.256 },
-    // Independant reel (TNS)
-    independant_reel: { tns: 0.45 },
-    // Profession liberale BNC reel
-    liberal: { tns: 0.40 },
-    // Retraite
-    retraite: { csg: 0.091 },
-    // Chomeur
-    chomeur: { csg: 0.062 },
-    // Etudiant
-    etudiant: {}
-};
-
-// Micro-entrepreneur : abattements forfaitaires pour IR
-const MICRO_ABATTEMENTS = {
-    micro_bic_vente: 0.71,    // 71% abattement
-    micro_bic_service: 0.50,  // 50% abattement
-    micro_bnc: 0.34           // 34% abattement
-};
-
-// TVA taux moyen effectif sur consommation
+const PFU_IR = 0.128, PFU_PS = 0.186, PFU_TOTAL = 0.314;
+const PS_PATRIMOINE = 0.186, CSG_DEDUCTIBLE = 0.068, ABATTEMENT_DIVIDENDES = 0.40;
 const TVA_TAUX_MOYEN = 0.15;
 
-// =============================================
-// BUDGET ETAT (% des depenses ~500 Md)
-// =============================================
+const COTISATIONS = {
+    salarie: { salariales: 0.225, patronales: 0.42 },
+    fonctionnaire: { salariales: 0.21, patronales: 0.38 },
+    gerant_maj_sarl: { tns: 0.45 },
+    president_sas: { salariales: 0.22, patronales: 0.42 },
+    micro_bic_vente: { taux_ca: 0.123 }, micro_bic_service: { taux_ca: 0.212 }, micro_bnc: { taux_ca: 0.256 },
+    independant_reel: { tns: 0.45 }, liberal: { tns: 0.40 },
+    retraite: { csg: 0.091 }, chomeur: { csg: 0.062 }, etudiant: {}
+};
+
+const MICRO_ABATTEMENTS = { micro_bic_vente: 0.71, micro_bic_service: 0.50, micro_bnc: 0.34 };
+
+// IS : 15% <= 42500, 25% au-dela
+function calculIS(resultat) {
+    if (resultat <= 0) return 0;
+    if (resultat <= 42500) return resultat * 0.15;
+    return 42500 * 0.15 + (resultat - 42500) * 0.25;
+}
+
+// Budget data (same as before)
 const BUDGET_ETAT = [
-    { id:'enseignement', nom:'Education nationale', icon:'🎓', pct:16.2, color:'#2196F3',
-      desc:'Ecoles, colleges, lycees, enseignement superieur',
-      concret:'Votre contribution finance <strong>{jours} jours de scolarite</strong> pour un eleve (cout moyen: 8 960 euros/an).' },
-    { id:'defense', nom:'Defense et armees', icon:'🛡️', pct:10.8, color:'#607D8B',
-      desc:'Armee, dissuasion nucleaire, operations exterieures',
-      concret:'Vous financez <strong>{heures}h de patrouille</strong> militaire. La France a la 1ere armee d\'Europe.' },
-    { id:'dette', nom:'Charge de la dette', icon:'🏦', pct:10.4, color:'#795548',
-      desc:'Interets de la dette publique (~3 300 Md euros)',
-      concret:'Vous payez <strong>{euros} euros d\'interets</strong> sur la dette. Chaque Francais "doit" ~49 000 euros.' },
-    { id:'recherche', nom:'Recherche et enseignement sup.', icon:'🔬', pct:5.8, color:'#9C27B0',
-      desc:'CNRS, universites, recherche spatiale, innovation',
-      concret:'Vous financez <strong>{minutes} minutes de recherche</strong> d\'un chercheur du CNRS.' },
-    { id:'securite', nom:'Securite interieure', icon:'🚔', pct:4.6, color:'#F44336',
-      desc:'Police nationale, gendarmerie, securite civile',
-      concret:'Vous financez <strong>{heures}h de patrouille</strong> de police/gendarmerie (250 000 agents).' },
-    { id:'justice', nom:'Justice', icon:'⚖️', pct:2.4, color:'#3F51B5',
-      desc:'Tribunaux, prisons, aide juridictionnelle',
-      concret:'Vous financez <strong>{minutes} minutes d\'audience</strong> au tribunal.' },
-    { id:'ecologie', nom:'Ecologie et transition', icon:'🌿', pct:5.6, color:'#4CAF50',
-      desc:'Transition energetique, biodiversite, climat',
-      concret:'Vous financez <strong>{m2} m2 de renovation energetique</strong>.' },
-    { id:'solidarite', nom:'Solidarite et insertion', icon:'🤝', pct:7.2, color:'#FF9800',
-      desc:'RSA, AAH, hebergement d\'urgence, aide alimentaire',
-      concret:'Vous financez <strong>{jours} jours de RSA</strong> pour une personne seule (607 euros/mois).' },
-    { id:'collectivites', nom:'Transferts aux collectivites', icon:'🏛️', pct:9.8, color:'#009688',
-      desc:'Dotations globales de fonctionnement (DGF), perequation',
-      concret:'Vous contribuez <strong>{euros} euros</strong> aux dotations de l\'Etat vers les collectivites.' },
-    { id:'culture', nom:'Culture', icon:'🎭', pct:0.8, color:'#E91E63',
-      desc:'Musees, spectacle vivant, patrimoine, audiovisuel public',
-      concret:'Vous financez <strong>{entrees} entrees au musee</strong> (cout subventionne ~15 euros).' },
-    { id:'sport', nom:'Sport', icon:'⚽', pct:0.3, color:'#00BCD4',
-      desc:'Sport pour tous, haut niveau',
-      concret:'Vous financez <strong>{heures}h d\'acces</strong> a un equipement sportif subventionne.' },
-    { id:'diplomatie', nom:'Affaires etrangeres', icon:'🌍', pct:1.4, color:'#FF5722',
-      desc:'Diplomatie, aide au developpement, consulats',
-      concret:'Vous contribuez a l\'aide au developpement a hauteur de <strong>{euros} euros</strong>.' },
-    { id:'agriculture', nom:'Agriculture et alimentation', icon:'🌾', pct:0.8, color:'#8BC34A',
-      desc:'Aides aux agriculteurs, securite alimentaire',
-      concret:'Vous financez <strong>{repas} repas de cantine</strong> scolaire subventionnes.' },
-    { id:'transport', nom:'Infrastructures et transports', icon:'🚄', pct:2.8, color:'#673AB7',
-      desc:'Routes, rail, ports, transport urbain',
-      concret:'Vous financez l\'entretien de <strong>{km} metres de route nationale</strong>.' },
-    { id:'logement', nom:'Logement et urbanisme', icon:'🏠', pct:3.2, color:'#CDDC39',
-      desc:'APL, logement social, renovation urbaine',
-      concret:'Vous contribuez <strong>{euros} euros aux APL</strong>. 6,5 millions de menages beneficiaires.' },
-    { id:'autres_etat', nom:'Autres missions', icon:'📋', pct:17.9, color:'#9E9E9E',
-      desc:'Administration, pensions fonctionnaires, outre-mer, travail, immigration...',
-      concret:'Ce poste couvre les frais de fonctionnement de l\'Etat et les pensions des fonctionnaires retraites.' }
+    { id:'enseignement', nom:'Education nationale', icon:'🎓', pct:16.2, color:'#2196F3', desc:'Ecoles, colleges, lycees, enseignement superieur', concret:'Finance <strong>{jours} jours de scolarite</strong> d\'un eleve (8 960 euros/an).' },
+    { id:'defense', nom:'Defense', icon:'🛡️', pct:10.8, color:'#607D8B', desc:'Armee, dissuasion, OPEX', concret:'Finance <strong>{heures}h de patrouille</strong> militaire.' },
+    { id:'dette', nom:'Charge de la dette', icon:'🏦', pct:10.4, color:'#795548', desc:'Interets dette publique (~3 300 Md)', concret:'<strong>{euros} euros d\'interets</strong> sur la dette.' },
+    { id:'recherche', nom:'Recherche', icon:'🔬', pct:5.8, color:'#9C27B0', desc:'CNRS, universites, innovation', concret:'<strong>{minutes} min de recherche</strong> CNRS.' },
+    { id:'securite', nom:'Securite', icon:'🚔', pct:4.6, color:'#F44336', desc:'Police, gendarmerie', concret:'<strong>{heures}h de patrouille</strong> police.' },
+    { id:'justice', nom:'Justice', icon:'⚖️', pct:2.4, color:'#3F51B5', desc:'Tribunaux, prisons', concret:'<strong>{minutes} min d\'audience</strong>.' },
+    { id:'ecologie', nom:'Ecologie', icon:'🌿', pct:5.6, color:'#4CAF50', desc:'Transition energetique, climat', concret:'<strong>{m2} m2 de renovation</strong> energetique.' },
+    { id:'solidarite', nom:'Solidarite', icon:'🤝', pct:7.2, color:'#FF9800', desc:'RSA, AAH, hebergement urgence', concret:'<strong>{jours} jours de RSA</strong> (607 euros/mois).' },
+    { id:'collectivites', nom:'Transferts collectivites', icon:'🏛️', pct:9.8, color:'#009688', desc:'DGF, perequation', concret:'<strong>{euros} euros</strong> en dotations.' },
+    { id:'culture', nom:'Culture', icon:'🎭', pct:0.8, color:'#E91E63', desc:'Musees, patrimoine, audiovisuel', concret:'<strong>{entrees} entrees</strong> au musee.' },
+    { id:'sport', nom:'Sport', icon:'⚽', pct:0.3, color:'#00BCD4', desc:'Sport pour tous', concret:'<strong>{heures}h</strong> equipement sportif.' },
+    { id:'diplomatie', nom:'Affaires etrangeres', icon:'🌍', pct:1.4, color:'#FF5722', desc:'Diplomatie, aide developpement', concret:'<strong>{euros} euros</strong> aide au developpement.' },
+    { id:'agriculture', nom:'Agriculture', icon:'🌾', pct:0.8, color:'#8BC34A', desc:'Aides agriculteurs', concret:'<strong>{repas} repas</strong> cantine subventionnes.' },
+    { id:'transport', nom:'Transports', icon:'🚄', pct:2.8, color:'#673AB7', desc:'Routes, rail, ports', concret:'<strong>{km} metres</strong> de route.' },
+    { id:'logement', nom:'Logement', icon:'🏠', pct:3.2, color:'#CDDC39', desc:'APL, logement social', concret:'<strong>{euros} euros</strong> aux APL.' },
+    { id:'autres_etat', nom:'Autres missions', icon:'📋', pct:17.9, color:'#9E9E9E', desc:'Admin, pensions, outre-mer...', concret:'Fonctionnement de l\'Etat et pensions.' }
 ];
-
-// Protection sociale (~640 Md)
 const BUDGET_SECU = [
-    { id:'maladie', nom:'Assurance maladie', icon:'🏥', pct:34.0, color:'#F44336',
-      desc:'Hopitaux, medecins, medicaments, arrets maladie',
-      concret:'Vous financez <strong>{consultations} consultations</strong> generaliste (~46 euros) et <strong>{jours_hosp} jours d\'hospitalisation</strong> (~2 000 euros/jour).' },
-    { id:'retraite', nom:'Retraites', icon:'👴', pct:45.0, color:'#FF9800',
-      desc:'Pensions de retraite de base et complementaires',
-      concret:'Vous financez <strong>{mois} mois de pension</strong> retraite (moyenne: 1 531 euros brut/mois). 17 millions de retraites.' },
-    { id:'famille', nom:'Famille', icon:'👨‍👩‍👧‍👦', pct:7.5, color:'#4CAF50',
-      desc:'Allocations familiales, creches, conge parental',
-      concret:'Vous financez <strong>{jours_creche} jours de creche</strong> (~2 500 euros/mois par place).' },
-    { id:'chomage', nom:'Assurance chomage', icon:'📊', pct:6.5, color:'#2196F3',
-      desc:'Indemnisation des demandeurs d\'emploi (Unedic)',
-      concret:'Vous financez <strong>{jours_indem} jours d\'indemnisation</strong> chomage (moyenne ~1 200 euros/mois).' },
-    { id:'at_mp', nom:'Accidents du travail', icon:'⚠️', pct:2.0, color:'#795548',
-      desc:'Indemnisation des AT/MP',
-      concret:'Vous contribuez a couvrir <strong>{accidents} accidents</strong> du travail par an (~650 000 en France).' },
-    { id:'dependance', nom:'Autonomie / Dependance', icon:'🧑‍🦽', pct:5.0, color:'#9C27B0',
-      desc:'APA, aide aux personnes agees et handicapees, EHPAD',
-      concret:'Vous financez <strong>{jours_ehpad} jours en EHPAD</strong> subventionnes (~60 euros/jour pris en charge).' }
+    { id:'maladie', nom:'Assurance maladie', icon:'🏥', pct:34.0, color:'#F44336', desc:'Hopitaux, medecins, medicaments', concret:'<strong>{consultations} consultations</strong> et <strong>{jours_hosp} j. hospitalisation</strong>.' },
+    { id:'retraite', nom:'Retraites', icon:'👴', pct:45.0, color:'#FF9800', desc:'Pensions base + complementaire', concret:'<strong>{mois} mois</strong> de pension (1 531 euros/mois).' },
+    { id:'famille', nom:'Famille', icon:'👨‍👩‍👧‍👦', pct:7.5, color:'#4CAF50', desc:'AF, creches, conge parental', concret:'<strong>{jours_creche} jours</strong> de creche.' },
+    { id:'chomage', nom:'Chomage', icon:'📊', pct:6.5, color:'#2196F3', desc:'Indemnisation (Unedic)', concret:'<strong>{jours_indem} jours</strong> d\'ARE.' },
+    { id:'at_mp', nom:'AT/MP', icon:'⚠️', pct:2.0, color:'#795548', desc:'Accidents du travail', concret:'Couverture de <strong>{accidents}</strong> AT.' },
+    { id:'dependance', nom:'Autonomie', icon:'🧑‍🦽', pct:5.0, color:'#9C27B0', desc:'APA, EHPAD', concret:'<strong>{jours_ehpad} jours</strong> EHPAD.' }
 ];
-
-// Collectivites locales (~280 Md)
 const BUDGET_LOCAL = [
-    { id:'ecoles_loc', nom:'Ecoles et periscolaire', icon:'🏫', pct:12.0, color:'#2196F3',
-      desc:'Construction/entretien ecoles (communes), colleges (departements), lycees (regions)',
-      concret:'Vous contribuez a l\'entretien de <strong>{m2} m2 de batiment scolaire</strong> et au periscolaire.' },
-    { id:'voirie', nom:'Voirie et transports locaux', icon:'🚌', pct:14.0, color:'#673AB7',
-      desc:'Routes departementales, bus, tramway, metro, pistes cyclables',
-      concret:'Vous financez l\'entretien de <strong>{km} metres de voirie</strong> communale.' },
-    { id:'social_loc', nom:'Action sociale locale', icon:'🏠', pct:22.0, color:'#FF9800',
-      desc:'RSA (departement), aide a l\'enfance, PMI, CCAS',
-      concret:'Vous contribuez a <strong>{jours} jours d\'aide sociale</strong> departementale.' },
-    { id:'eau_dechets', nom:'Eau et dechets', icon:'💧', pct:8.0, color:'#00BCD4',
-      desc:'Eau potable, assainissement, collecte des dechets',
-      concret:'Vous financez le traitement de <strong>{litres} litres d\'eau potable</strong> et <strong>{kg} kg de dechets</strong>.' },
-    { id:'urbanisme_loc', nom:'Urbanisme et logement', icon:'🏗️', pct:10.0, color:'#795548',
-      desc:'PLU, logement social, renovation urbaine',
-      concret:'Vous contribuez a la construction de logements sociaux dans votre intercommunalite.' },
-    { id:'culture_sport_loc', nom:'Culture, sport, jeunesse', icon:'📚', pct:9.0, color:'#E91E63',
-      desc:'Bibliotheques, piscines, stades, festivals, MJC',
-      concret:'Vous financez <strong>{heures}h d\'ouverture</strong> de bibliotheque municipale.' },
-    { id:'securite_loc', nom:'Securite et incendie', icon:'🚒', pct:5.0, color:'#F44336',
-      desc:'Police municipale, SDIS (pompiers)',
-      concret:'Vous financez <strong>{interventions} interventions</strong> de pompiers (4,8M/an en France).' },
-    { id:'admin_loc', nom:'Administration locale', icon:'🏛️', pct:14.0, color:'#9E9E9E',
-      desc:'Personnel, etat civil, elections, fonctionnement mairies',
-      concret:'Vous contribuez au fonctionnement de <strong>votre mairie</strong> et de ses services.' },
-    { id:'economie_loc', nom:'Developpement economique', icon:'💼', pct:6.0, color:'#4CAF50',
-      desc:'Zones d\'activite, aide entreprises, tourisme, formation pro (regions)',
-      concret:'Vous contribuez au soutien des entreprises locales et a la formation professionnelle.' }
+    { id:'ecoles_loc', nom:'Ecoles', icon:'🏫', pct:12.0, color:'#2196F3', desc:'Batiments scolaires, periscolaire', concret:'<strong>{m2} m2</strong> batiment scolaire.' },
+    { id:'voirie', nom:'Voirie/transports', icon:'🚌', pct:14.0, color:'#673AB7', desc:'Routes, bus, tramway', concret:'<strong>{km} m</strong> de voirie.' },
+    { id:'social_loc', nom:'Action sociale', icon:'🏠', pct:22.0, color:'#FF9800', desc:'RSA, enfance, PMI', concret:'<strong>{jours} jours</strong> aide sociale.' },
+    { id:'eau_dechets', nom:'Eau/dechets', icon:'💧', pct:8.0, color:'#00BCD4', desc:'Eau potable, dechets', concret:'<strong>{litres} L</strong> eau + <strong>{kg} kg</strong> dechets.' },
+    { id:'urbanisme_loc', nom:'Urbanisme', icon:'🏗️', pct:10.0, color:'#795548', desc:'Logement social, PLU', concret:'Logements sociaux.' },
+    { id:'culture_sport_loc', nom:'Culture/sport', icon:'📚', pct:9.0, color:'#E91E63', desc:'Bibliotheques, piscines', concret:'<strong>{heures}h</strong> bibliotheque.' },
+    { id:'securite_loc', nom:'Securite/incendie', icon:'🚒', pct:5.0, color:'#F44336', desc:'Pompiers, police municipale', concret:'<strong>{interventions}</strong> interventions pompiers.' },
+    { id:'admin_loc', nom:'Administration', icon:'🏛️', pct:14.0, color:'#9E9E9E', desc:'Mairies, etat civil', concret:'Fonctionnement mairie.' },
+    { id:'economie_loc', nom:'Economie', icon:'💼', pct:6.0, color:'#4CAF50', desc:'Aide entreprises, formation', concret:'Soutien entreprises locales.' }
 ];
 
 // =============================================
-// VISIBILITE DU FORMULAIRE
+// TABS
+// =============================================
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['manual','import','entreprise'][i] === tab));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// =============================================
+// PDF PARSING (pdf.js)
+// =============================================
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function extractPdfText(file) {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return text;
+}
+
+function findAmount(text, patterns) {
+    for (const p of patterns) {
+        const regex = new RegExp(p + '[\\s:]*([\\d\\s,.]+)', 'i');
+        const m = text.match(regex);
+        if (m) {
+            const val = parseFloat(m[1].replace(/\s/g, '').replace(',', '.'));
+            if (!isNaN(val) && val > 0) return val;
+        }
+    }
+    return 0;
+}
+
+// =============================================
+// AVIS D'IMPOSITION PARSING
+// =============================================
+async function handleAvisUpload(file) {
+    if (!file) return;
+    try {
+        const text = await extractPdfText(file);
+        const data = parseAvisIR(text);
+        applyAvisData(data);
+        showFeedback('feedbackAvis', data);
+        document.getElementById('uploadAvis').classList.add('loaded');
+        document.querySelector('#uploadAvis .label').textContent = 'Document charge : ' + file.name;
+    } catch (e) {
+        alert('Erreur de lecture du PDF. Verifiez que c\'est bien un avis d\'imposition.');
+        console.error(e);
+    }
+}
+
+function parseAvisIR(text) {
+    return {
+        revenuBrutGlobal: findAmount(text, ['revenu brut global', 'rev\\.? brut global', 'total des revenus bruts']),
+        revenuImposable: findAmount(text, ['revenu net imposable', 'rev\\.? net imposable', 'revenu imposable']),
+        irNet: findAmount(text, ['impot sur le revenu net', 'imp[oô]t net', 'montant de.*imp[oô]t', 'imp[oô]t sur les revenus']),
+        traitementsSalaires: findAmount(text, ['traitements.*salaires', 'salaires.*traitements', '1AJ', 'total.*salaires']),
+        rcm: findAmount(text, ['revenus.*capitaux mobiliers', 'rev\\.? cap\\.? mob', '2DC', '2TR']),
+        revenusFonciers: findAmount(text, ['revenus fonciers', 'rev\\.? fonciers', '4BA', '4BE']),
+        plusValues: findAmount(text, ['plus-values', 'plus values', '3VG']),
+        nbParts: findAmount(text, ['nombre de parts', 'nb\\.? parts', 'parts fiscales']),
+        rfr: findAmount(text, ['revenu fiscal.*reference', 'RFR', 'revenu fiscal de reference']),
+        csgDeductible: findAmount(text, ['CSG d[eé]ductible', '6DE']),
+        pensionsRetraite: findAmount(text, ['pensions.*retraites', '1AS']),
+    };
+}
+
+function applyAvisData(d) {
+    if (d.traitementsSalaires > 0) setVal('remuneration', d.traitementsSalaires);
+    if (d.rcm > 0) {
+        // Repartir les RCM entre dividendes et interets (approximation)
+        setVal('dividendes', Math.round(d.rcm * 0.7));
+        setVal('interets', Math.round(d.rcm * 0.3));
+    }
+    if (d.revenusFonciers > 0) setVal('revenus_fonciers', d.revenusFonciers);
+    if (d.plusValues > 0) setVal('pv_mobilieres', d.plusValues);
+    if (d.pensionsRetraite > 0) {
+        setVal('remuneration', d.pensionsRetraite);
+        document.getElementById('statut').value = 'retraite';
+    }
+    if (d.nbParts > 0) {
+        if (d.nbParts >= 2) document.getElementById('situation').value = 'couple';
+        const enfParts = d.nbParts - (d.nbParts >= 2 ? 2 : 1);
+        if (enfParts >= 1) document.getElementById('enfants').value = Math.min(4, Math.round(enfParts * 2)).toString();
+    }
+    updateFormVisibility();
+}
+
+function showFeedback(id, d) {
+    const fb = document.getElementById(id);
+    fb.classList.add('visible');
+    const lines = [];
+    if (d.traitementsSalaires) lines.push('Salaires/traitements : ' + fmtMoney(d.traitementsSalaires));
+    if (d.pensionsRetraite) lines.push('Pensions retraite : ' + fmtMoney(d.pensionsRetraite));
+    if (d.rcm) lines.push('Revenus capitaux mobiliers : ' + fmtMoney(d.rcm));
+    if (d.revenusFonciers) lines.push('Revenus fonciers : ' + fmtMoney(d.revenusFonciers));
+    if (d.plusValues) lines.push('Plus-values : ' + fmtMoney(d.plusValues));
+    if (d.revenuImposable) lines.push('Revenu net imposable : ' + fmtMoney(d.revenuImposable));
+    if (d.irNet) lines.push('IR net : ' + fmtMoney(d.irNet));
+    if (d.nbParts) lines.push('Parts fiscales : ' + d.nbParts);
+    if (d.rfr) lines.push('RFR : ' + fmtMoney(d.rfr));
+    if (lines.length === 0) lines.push('Aucune donnee reconnue. Verifiez les champs manuellement.');
+    fb.querySelector('#' + id + 'Content').innerHTML = lines.join('<br>');
+}
+
+// =============================================
+// BULLETIN DE PAIE PARSING
+// =============================================
+async function handlePaieUpload(file) {
+    if (!file) return;
+    try {
+        const text = await extractPdfText(file);
+        const d = parsePaie(text);
+        document.getElementById('uploadPaie').classList.add('loaded');
+        document.querySelector('#uploadPaie .label').textContent = 'Document charge : ' + file.name;
+        const fb = document.getElementById('feedbackPaie');
+        fb.classList.add('visible');
+        const lines = [];
+        if (d.brutMensuel) { lines.push('Salaire brut mensuel : ' + fmtMoney(d.brutMensuel)); setVal('remuneration', Math.round(d.brutMensuel * 12)); }
+        if (d.cotSalariales) lines.push('Cotisations salariales : ' + fmtMoney(d.cotSalariales));
+        if (d.cotPatronales) lines.push('Cotisations patronales : ' + fmtMoney(d.cotPatronales));
+        if (d.netImposable) lines.push('Net imposable : ' + fmtMoney(d.netImposable));
+        if (lines.length === 0) lines.push('Aucune donnee reconnue.');
+        document.getElementById('feedbackPaieContent').innerHTML = lines.join('<br>');
+    } catch(e) { alert('Erreur lecture PDF.'); console.error(e); }
+}
+
+function parsePaie(text) {
+    return {
+        brutMensuel: findAmount(text, ['salaire brut', 'brut mensuel', 'total brut']),
+        cotSalariales: findAmount(text, ['total cotisations salariales', 'total retenues salariales', 'cotisations.*salari']),
+        cotPatronales: findAmount(text, ['total cotisations patronales', 'total charges patronales', 'cotisations.*patronal']),
+        netImposable: findAmount(text, ['net imposable', 'cumul.*net imposable']),
+    };
+}
+
+// =============================================
+// BILAN / LIASSE FISCALE PARSING
+// =============================================
+async function handleBilanUpload(file) {
+    if (!file) return;
+    try {
+        let text;
+        if (file.name.endsWith('.pdf')) {
+            text = await extractPdfText(file);
+        } else {
+            text = await file.text();
+        }
+        const d = parseBilan(text);
+        applyBilanData(d);
+        document.getElementById('uploadBilan').classList.add('loaded');
+        document.querySelector('#uploadBilan .label').textContent = 'Document charge : ' + file.name;
+        const fb = document.getElementById('feedbackBilan');
+        fb.classList.add('visible');
+        const lines = [];
+        if (d.ca) lines.push('Chiffre d\'affaires : ' + fmtMoney(d.ca));
+        if (d.resultat) lines.push('Resultat : ' + fmtMoney(d.resultat));
+        if (d.masseSalariale) lines.push('Masse salariale : ' + fmtMoney(d.masseSalariale));
+        if (d.effectif) lines.push('Effectif : ' + d.effectif);
+        if (lines.length === 0) lines.push('Aucune donnee reconnue. Saisissez manuellement.');
+        document.getElementById('feedbackBilanContent').innerHTML = lines.join('<br>');
+    } catch(e) { alert('Erreur lecture fichier.'); console.error(e); }
+}
+
+function parseBilan(text) {
+    return {
+        ca: findAmount(text, ['chiffre d.affaires', 'CA net', 'total.*produits.*exploitation', 'FL', 'ventes.*marchandises']),
+        resultat: findAmount(text, ['r[eé]sultat.*exercice', 'r[eé]sultat net', 'b[eé]n[eé]fice.*exercice', 'HN', 'resultat courant']),
+        masseSalariale: findAmount(text, ['masse salariale', 'salaires.*traitements', 'charges.*personnel', 'FY']),
+        effectif: findAmount(text, ['effectif', 'nombre.*salari[eé]s', 'YP']),
+    };
+}
+
+function applyBilanData(d) {
+    if (d.ca) setVal('ent_ca', d.ca);
+    if (d.resultat) setVal('ent_resultat', d.resultat);
+    if (d.masseSalariale) setVal('ent_masse_sal', d.masseSalariale);
+    if (d.effectif) setVal('ent_nb_salaries', d.effectif);
+}
+
+function setVal(id, val) { document.getElementById(id).value = Math.round(val); }
+
+// =============================================
+// FORM VISIBILITY
 // =============================================
 function updateFormVisibility() {
     const statut = document.getElementById('statut').value;
     const isMicro = statut.startsWith('micro_');
-    const isSARL = statut === 'gerant_maj_sarl';
-    const hasCA = isMicro;
-    const hasDividendesSpecial = isSARL || statut === 'president_sas';
-
-    // CA visible pour micro-entrepreneurs
-    toggle('grp_ca', hasCA);
-
-    // Capital social visible pour SARL/SAS
-    toggle('grp_capital_social', hasDividendesSpecial);
-
-    // Remuneration label
+    toggle('grp_ca', isMicro);
+    toggle('grp_capital_social', statut === 'gerant_maj_sarl' || statut === 'president_sas');
     const lblRem = document.querySelector('#grp_remuneration label');
     const hintRem = document.getElementById('hint_rem');
-    if (isMicro) {
-        lblRem.textContent = 'Autre remuneration (salaire)';
-        hintRem.textContent = 'Si vous avez aussi un salaire en parallele (0 sinon)';
-    } else if (isSARL) {
-        lblRem.textContent = 'Remuneration de gerance annuelle';
-        hintRem.textContent = 'Remuneration brute versee par la SARL/EURL';
-    } else if (statut === 'president_sas') {
-        lblRem.textContent = 'Remuneration de presidence annuelle brute';
-        hintRem.textContent = 'Remuneration brute versee par la SAS/SASU';
-    } else if (statut === 'retraite') {
-        lblRem.textContent = 'Pension de retraite brute annuelle';
-        hintRem.textContent = 'Total brut de vos pensions (base + complementaire)';
-    } else if (statut === 'chomeur') {
-        lblRem.textContent = 'Allocations chomage brutes annuelles';
-        hintRem.textContent = 'ARE brut annuel';
-    } else {
-        lblRem.textContent = 'Remuneration annuelle brute';
-        hintRem.textContent = 'Salaire brut annuel ou remuneration de gerance';
-    }
-
-    // Revenus fonciers conditionnel
+    const labels = {
+        micro_bic_vente: ['Autre remuneration (salaire)', 'Salaire en parallele (0 sinon)'],
+        micro_bic_service: ['Autre remuneration (salaire)', 'Salaire en parallele (0 sinon)'],
+        micro_bnc: ['Autre remuneration (salaire)', 'Salaire en parallele (0 sinon)'],
+        gerant_maj_sarl: ['Remuneration de gerance', 'Brute versee par la SARL/EURL'],
+        president_sas: ['Remuneration de presidence brute', 'Brute versee par la SAS/SASU'],
+        retraite: ['Pension brute annuelle', 'Base + complementaire'],
+        chomeur: ['ARE brut annuel', 'Allocations chomage'],
+    };
+    const [l, h] = labels[statut] || ['Remuneration annuelle brute', 'Salaire brut annuel'];
+    lblRem.textContent = l; hintRem.textContent = h;
     const rf = parseFloat(document.getElementById('revenus_fonciers').value) || 0;
     toggle('grp_regime_foncier', rf > 0);
     toggle('grp_charges_foncieres', rf > 0 && document.getElementById('regime_foncier').value === 'reel');
 }
 
-function toggle(id, visible) {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('visible', visible);
-}
+function toggle(id, v) { const el = document.getElementById(id); if (el) el.classList.toggle('visible', v); }
 
 document.getElementById('revenus_fonciers').addEventListener('input', updateFormVisibility);
 document.getElementById('regime_foncier').addEventListener('change', updateFormVisibility);
 
 // =============================================
-// CALCUL IR (bareme progressif)
+// IR CALCULATION
 // =============================================
-function calculerIR(revenuImposable, nbParts) {
-    const rpp = revenuImposable / nbParts;
-    let impotPP = 0;
-    for (const t of TRANCHES_IR) {
-        if (rpp > t.min) {
-            impotPP += (Math.min(rpp, t.max) - t.min) * t.taux;
-        }
-    }
-    return Math.max(0, Math.round(impotPP * nbParts));
+function calculerIR(rev, parts) {
+    const rpp = rev / parts; let imp = 0;
+    for (const t of TRANCHES_IR) { if (rpp > t.min) imp += (Math.min(rpp, t.max) - t.min) * t.taux; }
+    return Math.max(0, Math.round(imp * parts));
 }
 
-function getTMI(revenuImposable, nbParts) {
-    const rpp = revenuImposable / nbParts;
-    for (let i = TRANCHES_IR.length - 1; i >= 0; i--) {
-        if (rpp > TRANCHES_IR[i].min) return TRANCHES_IR[i].taux;
-    }
+function getTMI(rev, parts) {
+    const rpp = rev / parts;
+    for (let i = TRANCHES_IR.length - 1; i >= 0; i--) { if (rpp > TRANCHES_IR[i].min) return TRANCHES_IR[i].taux; }
     return 0;
 }
 
 function getNbParts(situation, enfants) {
-    let parts = 1;
-    if (situation === 'couple' || situation === 'couple_1revenu') parts = 2;
-    if (enfants >= 1) parts += 0.5;
-    if (enfants >= 2) parts += 0.5;
-    if (enfants >= 3) parts += 1;
-    if (enfants >= 4) parts += 1;
-    return parts;
+    let p = situation.startsWith('couple') ? 2 : 1;
+    if (enfants >= 1) p += 0.5; if (enfants >= 2) p += 0.5;
+    if (enfants >= 3) p += 1; if (enfants >= 4) p += 1;
+    return p;
 }
 
 // =============================================
-// CALCUL PRINCIPAL
+// MAIN CALCULATION
 // =============================================
 function calculer() {
-    const statut = document.getElementById('statut').value;
-    const situation = document.getElementById('situation').value;
-    const enfants = parseInt(document.getElementById('enfants').value) || 0;
-    const remuneration = parseFloat(document.getElementById('remuneration').value) || 0;
-    const ca = parseFloat(document.getElementById('ca').value) || 0;
-    const dividendes = parseFloat(document.getElementById('dividendes').value) || 0;
-    const capitalSocial = parseFloat(document.getElementById('capital_social').value) || 10000;
-    const interets = parseFloat(document.getElementById('interets').value) || 0;
-    const pvMob = parseFloat(document.getElementById('pv_mobilieres').value) || 0;
-    const optionBareme = document.getElementById('option_bareme').value;
-    const revenusFonciers = parseFloat(document.getElementById('revenus_fonciers').value) || 0;
-    const regimeFoncier = document.getElementById('regime_foncier').value;
-    const chargesFoncieres = parseFloat(document.getElementById('charges_foncieres').value) || 0;
-    const revenusMeubles = parseFloat(document.getElementById('revenus_meubles').value) || 0;
-    const pvImmo = parseFloat(document.getElementById('pv_immo').value) || 0;
-    const loyer = parseFloat(document.getElementById('loyer').value) || 0;
-    const conso = parseFloat(document.getElementById('conso').value) || 0;
+    const V = id => parseFloat(document.getElementById(id).value) || 0;
+    const S = id => document.getElementById(id).value;
+
+    const statut = S('statut'), situation = S('situation'), enfants = parseInt(S('enfants')) || 0;
+    const rem = V('remuneration'), ca = V('ca'), div = V('dividendes'), capSoc = V('capital_social') || 10000;
+    const inter = V('interets'), pvMob = V('pv_mobilieres'), optBar = S('option_bareme');
+    const revFonc = V('revenus_fonciers'), regFonc = S('regime_foncier'), chgFonc = V('charges_foncieres');
+    const revMeub = V('revenus_meubles'), pvImmo = V('pv_immo');
+    const loyer = V('loyer'), conso = V('conso');
 
     const nbParts = getNbParts(situation, enfants);
     const isMicro = statut.startsWith('micro_');
-
-    // =========================================
-    // 1. COTISATIONS SOCIALES SUR ACTIVITE
-    // =========================================
-    let cotisationsSalariales = 0;
-    let cotisationsPatronales = 0;
-    let cotisationsTNS = 0;
-    let cotisationsMicro = 0;
-    let csgActivite = 0;
-    let revenuNetActivite = 0; // pour IR
-
     const cfg = COTISATIONS[statut] || {};
 
-    if (cfg.salariales !== undefined) {
-        // Salarie, fonctionnaire, president SAS
-        cotisationsSalariales = remuneration * cfg.salariales;
-        cotisationsPatronales = remuneration * cfg.patronales;
-        revenuNetActivite = remuneration - cotisationsSalariales;
-    } else if (cfg.tns !== undefined) {
-        // TNS (gerant SARL, independant reel, liberal)
-        cotisationsTNS = remuneration * cfg.tns;
-        revenuNetActivite = remuneration - cotisationsTNS;
-    } else if (cfg.taux_ca !== undefined) {
-        // Micro-entrepreneur
-        cotisationsMicro = ca * cfg.taux_ca;
-        const abattement = MICRO_ABATTEMENTS[statut] || 0.34;
-        revenuNetActivite = ca * (1 - abattement); // revenu imposable micro
-        // S'il a aussi un salaire en parallele
-        if (remuneration > 0) {
-            cotisationsSalariales = remuneration * 0.225;
-            cotisationsPatronales = remuneration * 0.42;
-            revenuNetActivite += remuneration - cotisationsSalariales;
-        }
-    } else if (cfg.csg !== undefined) {
-        // Retraite, chomeur
-        csgActivite = remuneration * cfg.csg;
-        revenuNetActivite = remuneration - csgActivite;
+    // 1. Cotisations activite
+    let cSal = 0, cPat = 0, cTNS = 0, cMicro = 0, csgAct = 0, revNet = 0;
+    if (cfg.salariales !== undefined) { cSal = rem * cfg.salariales; cPat = rem * cfg.patronales; revNet = rem - cSal; }
+    else if (cfg.tns !== undefined) { cTNS = rem * cfg.tns; revNet = rem - cTNS; }
+    else if (cfg.taux_ca !== undefined) {
+        cMicro = ca * cfg.taux_ca; revNet = ca * (1 - (MICRO_ABATTEMENTS[statut] || 0.34));
+        if (rem > 0) { cSal = rem * 0.225; cPat = rem * 0.42; revNet += rem - cSal; }
+    }
+    else if (cfg.csg !== undefined) { csgAct = rem * cfg.csg; revNet = rem - csgAct; }
+    else { revNet = rem; }
+
+    // 2. Cotisations dividendes SARL
+    let cDivSARL = 0;
+    if (statut === 'gerant_maj_sarl' && div > 0) cDivSARL = Math.max(0, div - capSoc * 0.10) * 0.45;
+
+    // 3. Revenus capital
+    const totalRCM = div + inter, totalPV = pvMob;
+    let irCap = 0, psCap = 0;
+    if (optBar === 'pfu') { irCap = (totalRCM + totalPV) * PFU_IR; psCap = (totalRCM + totalPV) * PFU_PS; }
+
+    // 4. Foncier
+    let revFoncImp = 0, psFonc = 0;
+    if (revFonc > 0) {
+        revFoncImp = (regFonc === 'micro' && revFonc <= 15000) ? revFonc * 0.70 : Math.max(0, revFonc - chgFonc);
+        psFonc = revFoncImp * PS_PATRIMOINE;
+    }
+    let revMeubImp = 0, psMeub = 0;
+    if (revMeub > 0) { revMeubImp = revMeub * 0.50; psMeub = revMeubImp * PS_PATRIMOINE; }
+    let irPVI = 0, psPVI = 0;
+    if (pvImmo > 0) { irPVI = pvImmo * 0.19; psPVI = pvImmo * PS_PATRIMOINE; }
+
+    // 5. IR bareme
+    let revImpBar = 0;
+    if (['salarie','fonctionnaire','president_sas'].includes(statut)) revImpBar += (rem - cSal) * 0.90;
+    else if (isMicro) { revImpBar += rem > 0 ? (rem - cSal) * 0.90 + ca * (1 - (MICRO_ABATTEMENTS[statut] || 0.34)) : revNet; }
+    else if (statut === 'gerant_maj_sarl') revImpBar = (rem - cTNS) * 0.90;
+    else if (statut === 'retraite') revImpBar += (rem - csgAct) * 0.90;
+    else if (statut === 'chomeur') revImpBar += rem - csgAct;
+    else if (cfg.tns !== undefined) revImpBar += revNet;
+    else revImpBar += revNet * 0.90;
+
+    revImpBar += revFoncImp + revMeubImp;
+
+    if (optBar === 'bareme') {
+        revImpBar += div * 0.6 + inter + pvMob - (totalRCM + totalPV) * CSG_DEDUCTIBLE;
+        psCap = (totalRCM + totalPV) * PS_PATRIMOINE;
+    }
+    revImpBar = Math.max(0, revImpBar);
+
+    let irBar = calculerIR(revImpBar, nbParts);
+    if (optBar === 'bareme') {
+        const revSC = Math.max(0, revImpBar - (div * 0.6 + inter + pvMob - (totalRCM + totalPV) * CSG_DEDUCTIBLE));
+        const irSC = calculerIR(revSC, nbParts);
+        irCap = irBar - irSC; irBar = irSC;
+    }
+
+    const tmi = getTMI(revImpBar, nbParts);
+    const irTotal = irBar + irCap + irPVI;
+    const tvaP = Math.round(conso * 12 * TVA_TAUX_MOYEN);
+    const taxC = Math.round(conso * 12 * 0.03);
+    const taxL = loyer === 0 ? Math.round(rem * 0.015) : 0;
+    const totCot = cSal + cPat + cTNS + cMicro + csgAct + cDivSARL;
+    const totPS = psCap + psFonc + psMeub + psPVI;
+
+    const versEtat = Math.round(irBar + irCap + irPVI + tvaP * 0.72 + taxC);
+    const versSecu = Math.round(totCot + totPS + tvaP * 0.10);
+    const versLocal = Math.round(tvaP * 0.18 + taxL);
+    let contribPerso = versEtat + versSecu + versLocal;
+
+    // =============================================
+    // ENTREPRISE
+    // =============================================
+    const entCA = V('ent_ca'), entRes = V('ent_resultat'), entMS = V('ent_masse_sal');
+    const entNbSal = V('ent_nb_salaries'), entTVAc = V('ent_tva_collectee'), entTVAd = V('ent_tva_deductible');
+    const entCFE = V('ent_cfe'), entCVAE = V('ent_cvae');
+    let entTaxApp = V('ent_taxe_apprentissage') || entMS * 0.0068;
+    let entFormation = V('ent_formation') || entMS * (entNbSal >= 11 ? 0.01 : 0.0055);
+    let entPEEC = V('ent_effort_construction') || (entNbSal >= 50 ? entMS * 0.0045 : 0);
+
+    const hasEntreprise = entCA > 0 || entRes > 0 || entMS > 0;
+    let contribEntreprise = 0;
+
+    if (hasEntreprise) {
+        const is = calculIS(entRes);
+        const tvaNet = Math.max(0, entTVAc - entTVAd);
+        const cotPatEnt = entMS * 0.42;
+        const totalEntTaxes = is + tvaNet + cotPatEnt + entCFE + entCVAE + entTaxApp + entFormation + entPEEC;
+        contribEntreprise = Math.round(totalEntTaxes);
+
+        // Render entreprise table
+        let rows = `<tr><th>Poste</th><th>Base</th><th>Taux / detail</th><th class="right">Montant</th></tr>`;
+        rows += `<tr><td>Impot sur les societes (IS)</td><td class="right">${fmtMoney(entRes)}</td><td>15% <= 42 500, 25% au-dela</td><td class="right">${fmtMoney(r(is))}</td></tr>`;
+        rows += `<tr><td>TVA reversee</td><td class="right">Collectee: ${fmtMoney(entTVAc)}</td><td>Collectee - deductible</td><td class="right">${fmtMoney(r(tvaNet))}</td></tr>`;
+        rows += `<tr><td>Cotisations patronales salaries</td><td class="right">${fmtMoney(entMS)}</td><td>~42% de la masse salariale</td><td class="right">${fmtMoney(r(cotPatEnt))}</td></tr>`;
+        rows += `<tr><td>CFE</td><td></td><td>Cotisation fonciere entreprises</td><td class="right">${fmtMoney(r(entCFE))}</td></tr>`;
+        if (entCVAE > 0) rows += `<tr><td>CVAE</td><td></td><td>Si CA > 500K euros</td><td class="right">${fmtMoney(r(entCVAE))}</td></tr>`;
+        rows += `<tr><td>Taxe d'apprentissage</td><td class="right">${fmtMoney(entMS)}</td><td>0.68%</td><td class="right">${fmtMoney(r(entTaxApp))}</td></tr>`;
+        rows += `<tr><td>Formation professionnelle</td><td></td><td>${entNbSal >= 11 ? '1%' : '0.55%'} masse salariale</td><td class="right">${fmtMoney(r(entFormation))}</td></tr>`;
+        if (entPEEC > 0) rows += `<tr><td>Effort construction (PEEC)</td><td></td><td>0.45% (50+ salaries)</td><td class="right">${fmtMoney(r(entPEEC))}</td></tr>`;
+        rows += `<tr class="total"><td>TOTAL CONTRIBUTION ENTREPRISE</td><td></td><td></td><td class="right">${fmtMoney(contribEntreprise)}</td></tr>`;
+        document.getElementById('entrepriseTable').innerHTML = rows;
+
+        // Equivalences concretes entreprise
+        let ceHtml = '<div class="concrete-grid">';
+        const salFinances = entMS > 0 ? Math.round(cotPatEnt / (entMS / entNbSal * 0.42)) : 0;
+        ceHtml += `<div class="concrete-card"><div class="icon">🏛️</div><div class="value">${fmtMoney(r(is))}</div><div class="card-label">d'IS pour financer l'Etat</div><div class="card-detail">${(is / (entRes || 1) * 100).toFixed(1)}% du resultat</div></div>`;
+        ceHtml += `<div class="concrete-card"><div class="icon">🏥</div><div class="value">${fmtMoney(r(cotPatEnt))}</div><div class="card-label">de cotisations patronales</div><div class="card-detail">Sante, retraite de ${entNbSal} salarie(s)</div></div>`;
+        ceHtml += `<div class="concrete-card"><div class="icon">💶</div><div class="value">${fmtMoney(r(tvaNet))}</div><div class="card-label">de TVA reversee a l'Etat</div><div class="card-detail">Collectee sur vos ventes</div></div>`;
+        ceHtml += `<div class="concrete-card"><div class="icon">🎓</div><div class="value">${fmtMoney(r(entTaxApp + entFormation))}</div><div class="card-label">pour la formation</div><div class="card-detail">Apprentissage + formation pro</div></div>`;
+        ceHtml += '</div>';
+        document.getElementById('entrepriseConcrete').innerHTML = ceHtml;
+
+        document.getElementById('entrepriseResults').style.display = 'block';
     } else {
-        // Etudiant
-        revenuNetActivite = remuneration;
+        document.getElementById('entrepriseResults').style.display = 'none';
     }
 
-    // =========================================
-    // 2. COTISATIONS SOCIALES SUR DIVIDENDES (SARL)
-    // =========================================
-    let cotisationsDividendesSARL = 0;
-    let dividendesNetsCotis = dividendes;
-    if (statut === 'gerant_maj_sarl' && dividendes > 0) {
-        // Au-dela de 10% du capital social => cotisations TNS ~45%
-        const seuil10pct = capitalSocial * 0.10;
-        const assietteCotis = Math.max(0, dividendes - seuil10pct);
-        cotisationsDividendesSARL = assietteCotis * 0.45;
-    }
+    const contribTotale = contribPerso + contribEntreprise;
 
-    // =========================================
-    // 3. REVENUS DU CAPITAL - CALCUL FISCAL
-    // =========================================
-    let irCapital = 0;
-    let psCapital = 0;
-    let irCapitalPFU = 0;
-    let irCapitalBareme = 0;
-
-    const totalRCM = dividendes + interets;
-    const totalPVMob = pvMob;
-
-    if (optionBareme === 'pfu') {
-        // PFU : 12.8% IR + 18.6% PS
-        irCapital = (totalRCM + totalPVMob) * PFU_IR;
-        psCapital = (totalRCM + totalPVMob) * PFU_PS;
-    }
-    // On calcule toujours les deux pour la comparaison
-    irCapitalPFU = (totalRCM + totalPVMob) * PFU_IR;
-    const psPFU = (totalRCM + totalPVMob) * PFU_PS;
-
-    // =========================================
-    // 4. REVENUS FONCIERS
-    // =========================================
-    let revenuFoncierImposable = 0;
-    let psFoncier = 0;
-
-    if (revenusFonciers > 0) {
-        if (regimeFoncier === 'micro' && revenusFonciers <= 15000) {
-            revenuFoncierImposable = revenusFonciers * 0.70; // abattement 30%
-        } else {
-            revenuFoncierImposable = Math.max(0, revenusFonciers - chargesFoncieres);
-        }
-        psFoncier = revenuFoncierImposable * PS_PATRIMOINE;
-    }
-
-    // Location meublee (micro-BIC: abattement 50%)
-    let revenuMeubleImposable = 0;
-    let psMeuble = 0;
-    if (revenusMeubles > 0) {
-        revenuMeubleImposable = revenusMeubles * 0.50; // micro-BIC 50%
-        psMeuble = revenuMeubleImposable * PS_PATRIMOINE;
-    }
-
-    // Plus-value immobiliere (deja nette d'abattements)
-    let irPVImmo = 0;
-    let psPVImmo = 0;
-    if (pvImmo > 0) {
-        irPVImmo = pvImmo * 0.19;
-        psPVImmo = pvImmo * PS_PATRIMOINE;
-    }
-
-    // =========================================
-    // 5. IMPOT SUR LE REVENU GLOBAL
-    // =========================================
-    // Revenu imposable au bareme
-    let revenuImposableBareme = 0;
-
-    // Activite : abattement 10% pour salaries/assimiles
-    if (['salarie','fonctionnaire','president_sas'].includes(statut)) {
-        revenuImposableBareme += revenuNetActivite * 0.90; // abattement 10%
-    } else if (isMicro) {
-        // Micro: revenuNetActivite = CA * (1 - abattement) + eventuel salaire net * 0.9
-        if (remuneration > 0) {
-            const salNet = remuneration - cotisationsSalariales;
-            revenuImposableBareme += salNet * 0.90;
-            revenuImposableBareme += ca * (1 - (MICRO_ABATTEMENTS[statut] || 0.34));
-        } else {
-            revenuImposableBareme += revenuNetActivite;
-        }
-    } else if (statut === 'retraite') {
-        revenuImposableBareme += revenuNetActivite * 0.90; // abattement 10%
-    } else if (statut === 'chomeur') {
-        revenuImposableBareme += revenuNetActivite; // pas d'abattement
-    } else if (cfg.tns !== undefined) {
-        // TNS reel : revenu net = rem - cotisations
-        revenuImposableBareme += revenuNetActivite;
-    } else {
-        revenuImposableBareme += revenuNetActivite * 0.90;
-    }
-
-    // Art. 62 CGI : gerant majoritaire SARL -> abattement 10% sur remuneration
-    if (statut === 'gerant_maj_sarl') {
-        revenuImposableBareme = (remuneration - cotisationsTNS) * 0.90;
-    }
-
-    // Revenus fonciers et meubles au bareme
-    revenuImposableBareme += revenuFoncierImposable;
-    revenuImposableBareme += revenuMeubleImposable;
-
-    // Revenus du capital si option bareme
-    if (optionBareme === 'bareme') {
-        // Dividendes: abattement 40% + CSG deductible 6.8%
-        const dividendesImposables = dividendes * (1 - ABATTEMENT_DIVIDENDES);
-        const interetsImposables = interets; // pas d'abattement
-        const pvMobImposables = pvMob; // pas d'abattement (sauf detention > 2 ans ancien regime, ignore)
-
-        revenuImposableBareme += dividendesImposables + interetsImposables + pvMobImposables;
-        // CSG deductible
-        revenuImposableBareme -= (totalRCM + totalPVMob) * CSG_DEDUCTIBLE;
-
-        // PS sur revenus du capital (meme taux 18.6%)
-        psCapital = (totalRCM + totalPVMob) * PS_PATRIMOINE;
-    }
-
-    revenuImposableBareme = Math.max(0, revenuImposableBareme);
-
-    // Calcul IR sur bareme
-    let irBareme = calculerIR(revenuImposableBareme, nbParts);
-
-    // Si option bareme, on compare
-    if (optionBareme === 'bareme') {
-        // L'IR sur capital est inclus dans irBareme
-        // Calculons l'IR sans les revenus du capital pour isoler la part capital
-        const revSansCapital = revenuImposableBareme - (dividendes * 0.6 + interets + pvMob - (totalRCM + totalPVMob) * CSG_DEDUCTIBLE);
-        const irSansCapital = calculerIR(Math.max(0, revSansCapital), nbParts);
-        irCapitalBareme = irBareme - irSansCapital;
-        irCapital = irCapitalBareme;
-        irBareme = irSansCapital; // on separe pour l'affichage
-    }
-
-    // IR total
-    const irTotal = irBareme + irCapital + irPVImmo;
-
-    // TMI pour info
-    const tmi = getTMI(revenuImposableBareme, nbParts);
-
-    // =========================================
-    // 6. TVA ET TAXES INDIRECTES
-    // =========================================
-    const tvaPayee = Math.round(conso * 12 * TVA_TAUX_MOYEN);
-    const taxesConso = Math.round(conso * 12 * 0.03);
-    const taxeLocale = loyer === 0 ? Math.round(remuneration * 0.015) : 0;
-
-    // =========================================
-    // 7. TOTAUX
-    // =========================================
-    const totalCotisations = cotisationsSalariales + cotisationsPatronales + cotisationsTNS + cotisationsMicro + csgActivite + cotisationsDividendesSARL;
-    const totalPS = psCapital + psFoncier + psMeuble + psPVImmo;
-    const totalImpots = irTotal + tvaPayee + taxesConso + taxeLocale + totalPS;
-    const contributionTotale = Math.round(totalCotisations + totalImpots);
-
-    // Repartition Etat / Secu / Local
-    const versEtat = Math.round(irBareme + irCapital + irPVImmo + tvaPayee * 0.72 + taxesConso);
-    const versSecu = Math.round(totalCotisations + totalPS + tvaPayee * 0.10);
-    const versLocalTotal = Math.round(tvaPayee * 0.18 + taxeLocale);
-
-    const contributionAjustee = versEtat + versSecu + versLocalTotal;
-
-    // =========================================
+    // =============================================
     // AFFICHAGE
-    // =========================================
+    // =============================================
     document.getElementById('results').style.display = 'block';
-    document.getElementById('totalContrib').textContent = fmtMoney(contributionAjustee);
-    document.getElementById('totalMois').textContent = fmtMoney(Math.round(contributionAjustee / 12));
+    document.getElementById('totalContrib').textContent = fmtMoney(contribTotale);
+    document.getElementById('totalMois').textContent = fmtMoney(Math.round(contribTotale / 12));
 
-    // Summary cards
-    document.getElementById('summaryCards').innerHTML = `
-        <div class="summary-card"><div class="amount">${fmtMoney(Math.round(irTotal))}</div><div class="label">Impot sur le revenu</div></div>
-        <div class="summary-card"><div class="amount">${fmtMoney(Math.round(totalCotisations))}</div><div class="label">Cotisations sociales</div></div>
-        <div class="summary-card"><div class="amount">${fmtMoney(Math.round(totalPS))}</div><div class="label">Prelevements sociaux</div></div>
-        <div class="summary-card"><div class="amount">${fmtMoney(tvaPayee)}</div><div class="label">TVA</div></div>
-        <div class="summary-card"><div class="amount">${fmtMoney(taxesConso + taxeLocale)}</div><div class="label">Autres taxes</div></div>
-    `;
+    const noteEnt = document.getElementById('totalEntrepriseNote');
+    if (hasEntreprise) {
+        noteEnt.style.display = 'block';
+        noteEnt.innerHTML = `Dont <strong>${fmtMoney(contribPerso)}</strong> contribution personnelle + <strong>${fmtMoney(contribEntreprise)}</strong> via votre entreprise`;
+    } else { noteEnt.style.display = 'none'; }
 
-    // Fiscal detail table
-    renderFiscalDetail({
-        statut, isMicro, nbParts, tmi,
-        remuneration, ca,
-        cotisationsSalariales, cotisationsPatronales, cotisationsTNS, cotisationsMicro, csgActivite,
-        revenuNetActivite, revenuImposableBareme, irBareme,
-        dividendes, interets, pvMob, optionBareme,
-        irCapital, irCapitalPFU, psCapital, psPFU,
-        cotisationsDividendesSARL, capitalSocial,
-        revenusFonciers, revenuFoncierImposable, psFoncier, regimeFoncier,
-        revenusMeubles, revenuMeubleImposable, psMeuble,
-        pvImmo, irPVImmo, psPVImmo,
-        tvaPayee, taxesConso, taxeLocale,
-        irTotal, totalCotisations, totalPS, contributionAjustee
-    });
+    const cards = [
+        ['IR personnel', irTotal], ['Cotisations sociales', totCot], ['Prelevements sociaux', totPS],
+        ['TVA (perso)', tvaP], ['Autres taxes', taxC + taxL]
+    ];
+    if (hasEntreprise) cards.push(['IS entreprise', calculIS(entRes)], ['TVA entreprise', Math.max(0, entTVAc - entTVAd)], ['Cotis. patronales ent.', entMS * 0.42]);
+    document.getElementById('summaryCards').innerHTML = cards.map(([l, v]) => `<div class="summary-card"><div class="amount">${fmtMoney(r(v))}</div><div class="label">${l}</div></div>`).join('');
 
-    // Budget sections
-    renderBudgetList('budgetEtatList', BUDGET_ETAT, versEtat);
-    renderBudgetList('budgetSecuList', BUDGET_SECU, versSecu);
-    renderBudgetList('budgetLocalList', BUDGET_LOCAL, versLocalTotal);
+    // Fiscal detail
+    renderFiscalDetail({ statut, isMicro, nbParts, tmi, remuneration: rem, ca, cSal, cPat, cTNS, cMicro, csgAct, irBar, div, inter, pvMob, optBar, irCap, psCap, cDivSARL, capSoc, revFonc, revFoncImp, psFonc, regFonc, revMeub, revMeubImp, psMeub, pvImmo, irPVI, psPVI, tvaP, taxC, taxL, irTotal, totCot, totPS, contribPerso });
 
-    // Donut
-    renderDonut(versEtat, versSecu, versLocalTotal);
+    // Budget repartition (combine perso + entreprise)
+    const totalVersEtat = versEtat + (hasEntreprise ? Math.round(calculIS(entRes) + Math.max(0, entTVAc - entTVAd) * 0.72 + entCFE + entCVAE + entTaxApp) : 0);
+    const totalVersSecu = versSecu + (hasEntreprise ? Math.round(entMS * 0.42 + entFormation) : 0);
+    const totalVersLocal = versLocal + (hasEntreprise ? Math.round(Math.max(0, entTVAc - entTVAd) * 0.18 + entPEEC) : 0);
 
-    // Concrete
-    renderConcrete(contributionAjustee, versEtat, versSecu, versLocalTotal);
-
-    // Per day
-    renderPerDay(versEtat, versSecu, versLocalTotal);
-
-    // Balance
-    renderBalance(contributionAjustee, remuneration + ca + dividendes + interets + revenusFonciers, statut, enfants, loyer);
+    renderBudgetList('budgetEtatList', BUDGET_ETAT, totalVersEtat);
+    renderBudgetList('budgetSecuList', BUDGET_SECU, totalVersSecu);
+    renderBudgetList('budgetLocalList', BUDGET_LOCAL, totalVersLocal);
+    renderDonut(totalVersEtat, totalVersSecu, totalVersLocal);
+    renderConcrete(contribTotale, totalVersEtat, totalVersSecu, totalVersLocal);
+    renderPerDay(totalVersEtat, totalVersSecu, totalVersLocal);
+    renderBalance(contribTotale, rem + ca + div + inter + revFonc + entCA, statut, enfants, loyer);
 
     document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 }
 
 // =============================================
-// DETAIL FISCAL
+// RENDER FISCAL DETAIL
 // =============================================
 function renderFiscalDetail(d) {
-    let rows = `<tr><th>Categorie</th><th>Base</th><th>Prelevements</th><th class="right">Montant</th></tr>`;
-
-    // -- Activite --
-    rows += `<tr class="cat-header"><td colspan="4">Revenus d'activite (art. 79 / 62 / 34 / 92 CGI)</td></tr>`;
-
+    let rows = `<tr><th>Categorie</th><th>Base</th><th>Detail</th><th class="right">Montant</th></tr>`;
+    rows += `<tr class="cat-header"><td colspan="4">Revenus d'activite</td></tr>`;
     if (d.remuneration > 0 || !d.isMicro) {
-        const typeRem = d.statut === 'gerant_maj_sarl' ? 'Remuneration gerance (art. 62 CGI)' :
-                        d.statut === 'retraite' ? 'Pension de retraite' :
-                        d.statut === 'chomeur' ? 'Allocation chomage (ARE)' :
-                        'Traitement / Salaire (art. 79 CGI)';
-        rows += `<tr><td>${typeRem}</td><td class="right">${fmtMoney(d.remuneration)}</td><td>Brut declare</td><td></td></tr>`;
+        const t = d.statut === 'gerant_maj_sarl' ? 'Rem. gerance (art. 62)' : d.statut === 'retraite' ? 'Pension' : d.statut === 'chomeur' ? 'ARE' : 'Salaire (art. 79)';
+        rows += `<tr><td>${t}</td><td class="right">${fmtMoney(d.remuneration)}</td><td>Brut</td><td></td></tr>`;
     }
+    if (d.cSal > 0) rows += `<tr><td>  Cotis. salariales</td><td class="right">${pct(d.cSal,d.remuneration)}</td><td>Secu, retraite, CSG</td><td class="right">-${fmtMoney(r(d.cSal))}</td></tr>`;
+    if (d.cPat > 0) rows += `<tr><td>  Cotis. patronales</td><td class="right">${pct(d.cPat,d.remuneration)}</td><td>Secu, retraite</td><td class="right">-${fmtMoney(r(d.cPat))}</td></tr>`;
+    if (d.cTNS > 0) rows += `<tr><td>  Cotis. TNS</td><td class="right">${pct(d.cTNS,d.remuneration)}</td><td>URSSAF/SSI</td><td class="right">-${fmtMoney(r(d.cTNS))}</td></tr>`;
+    if (d.csgAct > 0) rows += `<tr><td>  CSG/CRDS</td><td class="right">${pct(d.csgAct,d.remuneration)}</td><td></td><td class="right">-${fmtMoney(r(d.csgAct))}</td></tr>`;
+    if (d.isMicro && d.ca > 0) { rows += `<tr><td>CA micro</td><td class="right">${fmtMoney(d.ca)}</td><td></td><td></td></tr>`; rows += `<tr><td>  Cotis. micro</td><td class="right">${pct(d.cMicro,d.ca)}</td><td>URSSAF</td><td class="right">-${fmtMoney(r(d.cMicro))}</td></tr>`; }
+    rows += `<tr><td>  IR activite</td><td class="right">TMI ${(d.tmi*100).toFixed(0)}%</td><td>${d.nbParts} parts</td><td class="right">-${fmtMoney(r(d.irBar))}</td></tr>`;
 
-    if (d.cotisationsSalariales > 0)
-        rows += `<tr><td>  Cotisations salariales</td><td class="right">${pct(d.cotisationsSalariales, d.remuneration)}</td><td>Secu, retraite, chomage, CSG</td><td class="right">-${fmtMoney(r(d.cotisationsSalariales))}</td></tr>`;
-    if (d.cotisationsPatronales > 0)
-        rows += `<tr><td>  Cotisations patronales</td><td class="right">${pct(d.cotisationsPatronales, d.remuneration)}</td><td>Secu, retraite, chomage</td><td class="right">-${fmtMoney(r(d.cotisationsPatronales))}</td></tr>`;
-    if (d.cotisationsTNS > 0)
-        rows += `<tr><td>  Cotisations TNS (URSSAF/SSI)</td><td class="right">${pct(d.cotisationsTNS, d.remuneration)}</td><td>Maladie, retraite, invalidite, AF</td><td class="right">-${fmtMoney(r(d.cotisationsTNS))}</td></tr>`;
-    if (d.csgActivite > 0)
-        rows += `<tr><td>  CSG/CRDS</td><td class="right">${pct(d.csgActivite, d.remuneration)}</td><td>Contribution sociale</td><td class="right">-${fmtMoney(r(d.csgActivite))}</td></tr>`;
-
-    if (d.isMicro && d.ca > 0) {
-        rows += `<tr><td>Chiffre d'affaires micro (BIC/BNC)</td><td class="right">${fmtMoney(d.ca)}</td><td>CA encaisse</td><td></td></tr>`;
-        rows += `<tr><td>  Cotisations micro-entrepreneur</td><td class="right">${pct(d.cotisationsMicro, d.ca)}</td><td>Forfait URSSAF sur CA</td><td class="right">-${fmtMoney(r(d.cotisationsMicro))}</td></tr>`;
+    if (d.div > 0 || d.inter > 0 || d.pvMob > 0) {
+        rows += `<tr class="cat-header"><td colspan="4">Revenus du capital</td></tr>`;
+        if (d.div > 0) { rows += `<tr><td>Dividendes</td><td class="right">${fmtMoney(d.div)}</td><td></td><td></td></tr>`; if (d.cDivSARL > 0) rows += `<tr><td>  Cotis. TNS div. SARL</td><td class="right">45% > ${fmtMoney(d.capSoc*0.1)}</td><td>Art. L131-6 CSS</td><td class="right">-${fmtMoney(r(d.cDivSARL))}</td></tr>`; }
+        if (d.inter > 0) rows += `<tr><td>Interets</td><td class="right">${fmtMoney(d.inter)}</td><td></td><td></td></tr>`;
+        if (d.pvMob > 0) rows += `<tr><td>PV mobilieres</td><td class="right">${fmtMoney(d.pvMob)}</td><td></td><td></td></tr>`;
+        rows += `<tr><td>  ${d.optBar === 'pfu' ? 'IR PFU 12.8%' : 'IR bareme (abatt. 40%)'}</td><td></td><td>${d.optBar === 'pfu' ? 'Art. 200 A' : 'Option 2OP'}</td><td class="right">-${fmtMoney(r(d.irCap))}</td></tr>`;
+        rows += `<tr><td>  PS 18.6%</td><td></td><td></td><td class="right">-${fmtMoney(r(d.psCap))}</td></tr>`;
     }
-
-    rows += `<tr><td>  IR sur revenus d'activite</td><td class="right">Bareme (TMI: ${(d.tmi*100).toFixed(0)}%)</td><td>${d.nbParts} part(s) fiscale(s)</td><td class="right">-${fmtMoney(r(d.irBareme))}</td></tr>`;
-
-    // -- Revenus du capital --
-    if (d.dividendes > 0 || d.interets > 0 || d.pvMob > 0) {
-        rows += `<tr class="cat-header"><td colspan="4">Revenus de capitaux mobiliers (art. 108 / 124 / 150-0 A CGI)</td></tr>`;
-
-        if (d.dividendes > 0) {
-            rows += `<tr><td>Dividendes</td><td class="right">${fmtMoney(d.dividendes)}</td><td>Brut percu</td><td></td></tr>`;
-            if (d.cotisationsDividendesSARL > 0) {
-                const seuil = d.capitalSocial * 0.10;
-                rows += `<tr><td>  Cotisations TNS sur dividendes SARL</td><td class="right">45% au-dela de ${fmtMoney(seuil)}</td><td>Art. L131-6 CSS (>10% capital)</td><td class="right">-${fmtMoney(r(d.cotisationsDividendesSARL))}</td></tr>`;
-            }
-        }
-        if (d.interets > 0)
-            rows += `<tr><td>Interets</td><td class="right">${fmtMoney(d.interets)}</td><td>Brut percu</td><td></td></tr>`;
-        if (d.pvMob > 0)
-            rows += `<tr><td>Plus-values mobilieres</td><td class="right">${fmtMoney(d.pvMob)}</td><td>Gains nets</td><td></td></tr>`;
-
-        const totalCapital = d.dividendes + d.interets + d.pvMob;
-        if (d.optionBareme === 'pfu') {
-            rows += `<tr><td>  IR (PFU 12,8%)</td><td class="right">Art. 200 A CGI</td><td>Flat tax</td><td class="right">-${fmtMoney(r(d.irCapital))}</td></tr>`;
-            rows += `<tr><td>  PS (18,6%)</td><td class="right">CSG 10,6% + CRDS 0,5% + PS</td><td>Prelevements sociaux 2026</td><td class="right">-${fmtMoney(r(d.psCapital))}</td></tr>`;
-        } else {
-            rows += `<tr><td>  IR au bareme (abatt. 40% div.)</td><td class="right">Option 2OP</td><td>TMI: ${(d.tmi*100).toFixed(0)}%</td><td class="right">-${fmtMoney(r(d.irCapital))}</td></tr>`;
-            rows += `<tr><td>  PS (18,6%)</td><td class="right">Dont CSG deductible 6,8%</td><td>Prelevements sociaux</td><td class="right">-${fmtMoney(r(d.psCapital))}</td></tr>`;
-        }
+    if (d.revFonc > 0 || d.revMeub > 0) {
+        rows += `<tr class="cat-header"><td colspan="4">Revenus immobiliers</td></tr>`;
+        if (d.revFonc > 0) { rows += `<tr><td>Foncier (${d.regFonc === 'micro' ? 'micro' : 'reel'})</td><td class="right">${fmtMoney(d.revFonc)}</td><td>Imposable: ${fmtMoney(r(d.revFoncImp))}</td><td></td></tr>`; rows += `<tr><td>  PS</td><td></td><td></td><td class="right">-${fmtMoney(r(d.psFonc))}</td></tr>`; }
+        if (d.revMeub > 0) { rows += `<tr><td>Meuble (micro-BIC 50%)</td><td class="right">${fmtMoney(d.revMeub)}</td><td></td><td></td></tr>`; rows += `<tr><td>  PS</td><td></td><td></td><td class="right">-${fmtMoney(r(d.psMeub))}</td></tr>`; }
     }
-
-    // -- Revenus fonciers --
-    if (d.revenusFonciers > 0 || d.revenusMeubles > 0) {
-        rows += `<tr class="cat-header"><td colspan="4">Revenus fonciers et immobiliers (art. 14 / 35 bis CGI)</td></tr>`;
-        if (d.revenusFonciers > 0) {
-            const regime = d.regimeFoncier === 'micro' ? 'Micro-foncier (abatt. 30%)' : 'Regime reel';
-            rows += `<tr><td>Revenus fonciers</td><td class="right">${fmtMoney(d.revenusFonciers)}</td><td>${regime}</td><td></td></tr>`;
-            rows += `<tr><td>  Imposable</td><td class="right">${fmtMoney(r(d.revenuFoncierImposable))}</td><td>Soumis au bareme IR</td><td></td></tr>`;
-            rows += `<tr><td>  PS (18,6%)</td><td></td><td>Prelevements sociaux</td><td class="right">-${fmtMoney(r(d.psFoncier))}</td></tr>`;
-        }
-        if (d.revenusMeubles > 0) {
-            rows += `<tr><td>Location meublee (micro-BIC)</td><td class="right">${fmtMoney(d.revenusMeubles)}</td><td>Abattement 50%</td><td></td></tr>`;
-            rows += `<tr><td>  PS (18,6%)</td><td></td><td></td><td class="right">-${fmtMoney(r(d.psMeuble))}</td></tr>`;
-        }
-    }
-
-    if (d.pvImmo > 0) {
-        rows += `<tr class="cat-header"><td colspan="4">Plus-value immobiliere (art. 150 U CGI)</td></tr>`;
-        rows += `<tr><td>PV nette (apres abattements detention)</td><td class="right">${fmtMoney(d.pvImmo)}</td><td>IR 19% + PS 18,6%</td><td class="right">-${fmtMoney(r(d.irPVImmo + d.psPVImmo))}</td></tr>`;
-    }
-
-    // -- TVA et taxes --
-    rows += `<tr class="cat-header"><td colspan="4">Taxes sur la consommation</td></tr>`;
-    rows += `<tr><td>TVA (taux moyen ~15%)</td><td></td><td>Incluse dans vos achats</td><td class="right">-${fmtMoney(d.tvaPayee)}</td></tr>`;
-    if (d.taxesConso > 0)
-        rows += `<tr><td>Autres taxes indirectes (TICPE, etc.)</td><td></td><td>Carburant, alcool, tabac...</td><td class="right">-${fmtMoney(d.taxesConso)}</td></tr>`;
-    if (d.taxeLocale > 0)
-        rows += `<tr><td>Taxe fonciere (estimation)</td><td></td><td>Proprietaire</td><td class="right">-${fmtMoney(d.taxeLocale)}</td></tr>`;
-
-    // Total
-    rows += `<tr class="total"><td>TOTAL CONTRIBUTION</td><td></td><td></td><td class="right">${fmtMoney(d.contributionAjustee)}</td></tr>`;
-
+    if (d.pvImmo > 0) rows += `<tr class="cat-header"><td colspan="4">PV immobiliere</td></tr><tr><td>IR 19% + PS 18.6%</td><td class="right">${fmtMoney(d.pvImmo)}</td><td></td><td class="right">-${fmtMoney(r(d.irPVI+d.psPVI))}</td></tr>`;
+    rows += `<tr class="cat-header"><td colspan="4">Taxes consommation</td></tr>`;
+    rows += `<tr><td>TVA (~15%)</td><td></td><td></td><td class="right">-${fmtMoney(d.tvaP)}</td></tr>`;
+    if (d.taxC) rows += `<tr><td>Taxes indirectes</td><td></td><td></td><td class="right">-${fmtMoney(d.taxC)}</td></tr>`;
+    if (d.taxL) rows += `<tr><td>Taxe fonciere</td><td></td><td></td><td class="right">-${fmtMoney(d.taxL)}</td></tr>`;
+    rows += `<tr class="total"><td>TOTAL PERSONNEL</td><td></td><td></td><td class="right">${fmtMoney(d.contribPerso)}</td></tr>`;
     document.getElementById('fiscalTable').innerHTML = rows;
 
-    // Comparaison PFU vs Bareme
-    const totalCapital = d.dividendes + d.interets + d.pvMob;
-    if (totalCapital > 0) {
-        const coutPFU = totalCapital * PFU_TOTAL + d.cotisationsDividendesSARL;
-        // Calcul bareme pour comparaison
-        const divImpBareme = d.dividendes * 0.6;
-        const csgDeduc = totalCapital * 0.068;
-        const baseBareme = divImpBareme + d.interets + d.pvMob - csgDeduc;
-        const irSupp = baseBareme * d.tmi;
-        const psBareme = totalCapital * PS_PATRIMOINE;
-        const coutBareme = irSupp + psBareme + d.cotisationsDividendesSARL;
-
-        const meilleur = coutPFU < coutBareme ? 'PFU' : 'Bareme progressif';
-        const ecart = Math.abs(coutPFU - coutBareme);
-        const choisi = d.optionBareme === 'pfu' ? 'PFU' : 'Bareme progressif';
-
-        let html = `<strong>Comparaison PFU vs Bareme progressif</strong> (revenus du capital: ${fmtMoney(totalCapital)})<br>`;
-        html += `Cout total PFU (31,4%) : <strong>${fmtMoney(r(coutPFU))}</strong> | `;
-        html += `Cout total Bareme (TMI ${(d.tmi*100).toFixed(0)}% + abatt. 40% div.) : <strong>${fmtMoney(r(coutBareme))}</strong><br>`;
-        if (choisi === meilleur) {
-            html += `Vous avez choisi le regime le plus avantageux (${meilleur}).`;
-        } else {
-            html += `<strong style="color:#e1000f">Attention :</strong> le ${meilleur} serait plus avantageux pour vous (economie de ~${fmtMoney(r(ecart))}).`;
-        }
-
-        document.getElementById('pfuComparison').innerHTML = `<div class="pfu-comparison">${html}</div>`;
-    } else {
-        document.getElementById('pfuComparison').innerHTML = '';
-    }
+    // PFU comparison
+    const totCap = d.div + d.inter + d.pvMob;
+    if (totCap > 0) {
+        const cPFU = totCap * PFU_TOTAL + d.cDivSARL;
+        const cBar = (d.div * 0.6 + d.inter + d.pvMob - totCap * 0.068) * d.tmi + totCap * PS_PATRIMOINE + d.cDivSARL;
+        const best = cPFU < cBar ? 'PFU' : 'Bareme'; const ecart = Math.abs(cPFU - cBar);
+        const chosen = d.optBar === 'pfu' ? 'PFU' : 'Bareme';
+        let h = `<strong>PFU vs Bareme</strong> | PFU: <strong>${fmtMoney(r(cPFU))}</strong> | Bareme: <strong>${fmtMoney(r(cBar))}</strong> | `;
+        h += chosen === best ? `Bon choix (${best}).` : `<strong style="color:#e1000f">${best} serait mieux (~${fmtMoney(r(ecart))} d'economie).</strong>`;
+        document.getElementById('pfuComparison').innerHTML = `<div class="pfu-comparison">${h}</div>`;
+    } else document.getElementById('pfuComparison').innerHTML = '';
 }
 
 // =============================================
-// BUDGET LIST
+// RENDER FUNCTIONS
 // =============================================
-function renderBudgetList(containerId, items, totalAmount) {
-    const container = document.getElementById(containerId);
-    let html = '';
-    const maxPct = Math.max(...items.map(i => i.pct));
-
-    for (const item of items) {
-        const montant = Math.round(totalAmount * item.pct / 100);
-        const barWidth = (item.pct / maxPct * 100);
-        const montantParMois = Math.round(montant / 12);
-
-        let txt = item.concret;
-        txt = txt.replace('{jours}', Math.max(1, Math.round(montant / 24.5)));
-        txt = txt.replace('{heures}', Math.max(1, Math.round(montant / 35)));
-        txt = txt.replace('{minutes}', Math.max(1, Math.round(montant / 0.6)));
-        txt = txt.replace('{euros}', fmtNum(montant));
-        txt = txt.replace('{consultations}', Math.max(1, Math.round(montant / 46)));
-        txt = txt.replace('{jours_hosp}', (montant / 2000).toFixed(1));
-        txt = txt.replace('{mois}', (montant / 1531).toFixed(1));
-        txt = txt.replace('{jours_creche}', Math.max(1, Math.round(montant / 83)));
-        txt = txt.replace('{jours_indem}', Math.max(1, Math.round(montant / 40)));
-        txt = txt.replace('{accidents}', (montant * 650000 / 13e9).toFixed(2));
-        txt = txt.replace('{jours_ehpad}', Math.max(1, Math.round(montant / 60)));
-        txt = txt.replace('{m2}', Math.max(1, Math.round(montant / 40)));
-        txt = txt.replace('{entrees}', Math.max(1, Math.round(montant / 15)));
-        txt = txt.replace('{repas}', Math.max(1, Math.round(montant / 3)));
-        txt = txt.replace('{km}', Math.max(1, Math.round(montant / 8)));
-        txt = txt.replace('{litres}', fmtNum(Math.round(montant / 0.004)));
-        txt = txt.replace('{kg}', Math.max(1, Math.round(montant / 0.25)));
-        txt = txt.replace('{interventions}', (montant / 100).toFixed(1));
-        txt = txt.replace('{personnes}', Math.max(1, Math.round(montant / 35)));
-
-        const did = `detail-${containerId}-${item.id}`;
-        html += `
-            <div class="budget-item" onclick="toggleDetail('${did}')">
-                <div class="budget-icon">${item.icon}</div>
-                <div class="budget-info">
-                    <div class="budget-name">${item.nom}</div>
-                    <div class="budget-desc">${item.desc}</div>
-                    <div class="budget-bar-container"><div class="budget-bar" style="width:${barWidth}%;background:${item.color}"></div></div>
-                </div>
-                <div class="budget-amount">
-                    <div class="money">${fmtMoney(montant)}</div>
-                    <div class="percent">${item.pct}% | ${fmtMoney(montantParMois)}/mois</div>
-                </div>
-            </div>
-            <div class="budget-detail" id="${did}"><div class="concrete">${txt}</div></div>`;
+function renderBudgetList(cid, items, total) {
+    const mx = Math.max(...items.map(i => i.pct)); let h = '';
+    for (const it of items) {
+        const m = Math.round(total * it.pct / 100), bw = it.pct / mx * 100;
+        let t = it.concret; t=t.replace('{jours}',Math.max(1,Math.round(m/24.5)));t=t.replace('{heures}',Math.max(1,Math.round(m/35)));t=t.replace('{minutes}',Math.max(1,Math.round(m/0.6)));t=t.replace('{euros}',fmtNum(m));t=t.replace('{consultations}',Math.max(1,Math.round(m/46)));t=t.replace('{jours_hosp}',(m/2000).toFixed(1));t=t.replace('{mois}',(m/1531).toFixed(1));t=t.replace('{jours_creche}',Math.max(1,Math.round(m/83)));t=t.replace('{jours_indem}',Math.max(1,Math.round(m/40)));t=t.replace('{accidents}',(m*650000/13e9).toFixed(2));t=t.replace('{jours_ehpad}',Math.max(1,Math.round(m/60)));t=t.replace('{m2}',Math.max(1,Math.round(m/40)));t=t.replace('{entrees}',Math.max(1,Math.round(m/15)));t=t.replace('{repas}',Math.max(1,Math.round(m/3)));t=t.replace('{km}',Math.max(1,Math.round(m/8)));t=t.replace('{litres}',fmtNum(Math.round(m/0.004)));t=t.replace('{kg}',Math.max(1,Math.round(m/0.25)));t=t.replace('{interventions}',(m/100).toFixed(1));
+        const did=`d-${cid}-${it.id}`;
+        h+=`<div class="budget-item" onclick="toggleDetail('${did}')"><div class="budget-icon">${it.icon}</div><div class="budget-info"><div class="budget-name">${it.nom}</div><div class="budget-desc">${it.desc}</div><div class="budget-bar-container"><div class="budget-bar" style="width:${bw}%;background:${it.color}"></div></div></div><div class="budget-amount"><div class="money">${fmtMoney(m)}</div><div class="percent">${it.pct}% | ${fmtMoney(Math.round(m/12))}/mois</div></div></div><div class="budget-detail" id="${did}"><div class="concrete">${t}</div></div>`;
     }
-    container.innerHTML = html;
+    document.getElementById(cid).innerHTML = h;
 }
 
 function toggleDetail(id) { document.getElementById(id).classList.toggle('open'); }
 
-// =============================================
-// DONUT
-// =============================================
-function renderDonut(etat, secu, local) {
-    const total = etat + secu + local;
-    const data = [
-        { label: 'Etat (budget general)', value: etat, color: '#000091' },
-        { label: 'Protection sociale', value: secu, color: '#e1000f' },
-        { label: 'Collectivites locales', value: local, color: '#008941' }
-    ];
-
-    const R = 15.91549430919;
-    const C = 2 * Math.PI * R;
-    let offset = 0;
+function renderDonut(e, s, l) {
+    const t = e + s + l, data = [{l:'Etat',v:e,c:'#000091'},{l:'Protection sociale',v:s,c:'#e1000f'},{l:'Collectivites',v:l,c:'#008941'}];
+    const R = 15.915, C = 2 * Math.PI * R; let off = 0;
     let svg = `<circle cx="21" cy="21" r="${R}" fill="none" stroke="#eee" stroke-width="5"/>`;
-
-    for (const d of data) {
-        const p = d.value / total;
-        const dash = p * C;
-        const gap = C - dash;
-        const off = C - offset + C * 0.25;
-        svg += `<circle cx="21" cy="21" r="${R}" fill="none" stroke="${d.color}" stroke-width="5" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${off}"/>`;
-        offset += dash;
-    }
-
-    svg += `<text x="21" y="20" text-anchor="middle" font-size="3.5" font-weight="700" fill="#1e1e1e">${fmtMoney(total)}</text>`;
-    svg += `<text x="21" y="24" text-anchor="middle" font-size="1.8" fill="#666">total/an</text>`;
+    for (const d of data) { const p=d.v/t,dash=p*C,gap=C-dash,o=C-off+C*0.25; svg+=`<circle cx="21" cy="21" r="${R}" fill="none" stroke="${d.c}" stroke-width="5" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${o}"/>`; off+=dash; }
+    svg += `<text x="21" y="20" text-anchor="middle" font-size="3.2" font-weight="700" fill="#1e1e1e">${fmtMoney(t)}</text><text x="21" y="24" text-anchor="middle" font-size="1.8" fill="#666">total/an</text>`;
     document.getElementById('donutChart').innerHTML = svg;
-
-    let leg = '';
-    for (const d of data) {
-        leg += `<div class="legend-item"><div class="legend-dot" style="background:${d.color}"></div><span><strong>${((d.value/total)*100).toFixed(1)}%</strong> ${d.label} (${fmtMoney(d.value)})</span></div>`;
-    }
-    document.getElementById('donutLegend').innerHTML = leg;
+    document.getElementById('donutLegend').innerHTML = data.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.c}"></div><span><strong>${(d.v/t*100).toFixed(1)}%</strong> ${d.l} (${fmtMoney(d.v)})</span></div>`).join('');
 }
 
-// =============================================
-// CONCRETE
-// =============================================
-function renderConcrete(total, etat, secu, local) {
+function renderConcrete(total, e, s, l) {
     const cards = [
-        { icon:'🎓', value: Math.round(etat*0.162/(8960/365)), unit:'jours', label:"de scolarite d'un eleve", detail:"8 960 euros/an" },
-        { icon:'🏥', value: Math.round(secu*0.34/2000*24), unit:'heures', label:"d'hospitalisation", detail:"2 000 euros/jour" },
-        { icon:'🛣️', value: Math.round((etat*0.028+local*0.14)/8), unit:'metres', label:"de route entretenue", detail:"Voirie nationale + locale" },
-        { icon:'🤝', value: Math.round(etat*0.072/35), unit:'nuits', label:"d'hebergement d'urgence", detail:"Pour les sans-abri" },
-        { icon:'📚', value: Math.round(local*0.09/15), unit:'livres', label:"en bibliotheque", detail:"Achat et gestion" },
-        { icon:'🍽️', value: Math.round((etat*0.008+local*0.12)/3), unit:'repas', label:"de cantine subventionnes", detail:"Part collectivite" },
-        { icon:'👴', value: Math.round(secu*0.45/(1531/30)), unit:'jours', label:"de pension retraite", detail:"1 531 euros/mois en moyenne" },
-        { icon:'🚒', value: Math.max(1, Math.round(local*0.05/100)), unit:'interventions', label:"de pompiers", detail:"4,8M/an en France" }
+        {i:'🎓',v:Math.round(e*0.162/(8960/365)),u:'jours',l:"scolarite d'un eleve",d:"8 960 euros/an"},
+        {i:'🏥',v:Math.round(s*0.34/2000*24),u:'heures',l:"d'hospitalisation",d:"2 000 euros/jour"},
+        {i:'🛣️',v:Math.round((e*0.028+l*0.14)/8),u:'metres',l:"de route entretenue",d:"Nationale + locale"},
+        {i:'🤝',v:Math.round(e*0.072/35),u:'nuits',l:"hebergement urgence",d:"Sans-abri"},
+        {i:'📚',v:Math.round(l*0.09/15),u:'livres',l:"en bibliotheque",d:""},
+        {i:'🍽️',v:Math.round((e*0.008+l*0.12)/3),u:'repas',l:"cantine subventionnes",d:""},
+        {i:'👴',v:Math.round(s*0.45/(1531/30)),u:'jours',l:"de pension retraite",d:"1 531 euros/mois"},
+        {i:'🚒',v:Math.max(1,Math.round(l*0.05/100)),u:'interventions',l:"de pompiers",d:"4,8M/an"}
     ];
-
-    let html = '';
-    for (const c of cards) {
-        html += `<div class="concrete-card"><div class="icon">${c.icon}</div><div class="value">${fmtNum(c.value)}</div><div class="unit">${c.unit}</div><div class="card-label">${c.label}</div><div class="card-detail">${c.detail}</div></div>`;
-    }
-    document.getElementById('concreteGrid').innerHTML = html;
+    document.getElementById('concreteGrid').innerHTML = cards.map(c=>`<div class="concrete-card"><div class="icon">${c.i}</div><div class="value">${fmtNum(c.v)}</div><div class="unit">${c.u}</div><div class="card-label">${c.l}</div><div class="card-detail">${c.d}</div></div>`).join('');
 }
 
-// =============================================
-// PER DAY
-// =============================================
-function renderPerDay(etat, secu, local) {
-    const total = etat + secu + local;
-    const pd = total / 365;
-    const re = etat / total, rs = secu / total, rl = local / total;
-
-    const items = [
-        { icon:'🏥', amount:(pd*rs*0.34).toFixed(2), label:'Sante' },
-        { icon:'👴', amount:(pd*rs*0.45).toFixed(2), label:'Retraites' },
-        { icon:'🎓', amount:(pd*re*0.162).toFixed(2), label:'Education' },
-        { icon:'🛡️', amount:(pd*re*0.108).toFixed(2), label:'Defense' },
-        { icon:'🚔', amount:(pd*re*0.046).toFixed(2), label:'Securite' },
-        { icon:'🤝', amount:(pd*re*0.072).toFixed(2), label:'Solidarite' },
-        { icon:'🚌', amount:(pd*rl*0.14).toFixed(2), label:'Transports' },
-        { icon:'🌿', amount:(pd*re*0.056).toFixed(2), label:'Ecologie' },
-    ];
-
-    let html = '';
-    for (const i of items) {
-        html += `<div class="per-day-item"><div class="icon">${i.icon}</div><div class="amount">${i.amount} euros</div><div class="label">${i.label}</div></div>`;
-    }
-    document.getElementById('perDayGrid').innerHTML = html;
+function renderPerDay(e, s, l) {
+    const t=e+s+l,pd=t/365,re=e/t,rs=s/t,rl=l/t;
+    const items=[{i:'🏥',a:(pd*rs*0.34).toFixed(2),l:'Sante'},{i:'👴',a:(pd*rs*0.45).toFixed(2),l:'Retraites'},{i:'🎓',a:(pd*re*0.162).toFixed(2),l:'Education'},{i:'🛡️',a:(pd*re*0.108).toFixed(2),l:'Defense'},{i:'🚔',a:(pd*re*0.046).toFixed(2),l:'Securite'},{i:'🤝',a:(pd*re*0.072).toFixed(2),l:'Solidarite'},{i:'🚌',a:(pd*rl*0.14).toFixed(2),l:'Transports'},{i:'🌿',a:(pd*re*0.056).toFixed(2),l:'Ecologie'}];
+    document.getElementById('perDayGrid').innerHTML = items.map(i=>`<div class="per-day-item"><div class="icon">${i.i}</div><div class="amount">${i.a} euros</div><div class="label">${i.l}</div></div>`).join('');
 }
 
-// =============================================
-// BALANCE
-// =============================================
-function renderBalance(contribution, revenuTotal, statut, enfants, loyer) {
-    const depenseParHab = 20880;
-    let servicesRecus = depenseParHab;
-
-    if (enfants > 0) { servicesRecus += enfants * 8960 + enfants * 1500; }
-    if (statut === 'chomeur') servicesRecus += 14400;
-    if (statut === 'retraite') servicesRecus += 18000;
-    if (statut === 'etudiant') servicesRecus += 11000;
-    if (loyer > 0 && revenuTotal < 30000) servicesRecus += Math.min(loyer * 12 * 0.4, 3000);
-    servicesRecus += 3500; // sante
-
-    const mx = Math.max(contribution, servicesRecus);
-
+function renderBalance(contrib, revTot, statut, enfants, loyer) {
+    let srv = 20880;
+    if (enfants > 0) srv += enfants * (8960 + 1500);
+    if (statut === 'chomeur') srv += 14400;
+    if (statut === 'retraite') srv += 18000;
+    if (statut === 'etudiant') srv += 11000;
+    if (loyer > 0 && revTot < 30000) srv += Math.min(loyer * 12 * 0.4, 3000);
+    srv += 3500;
+    const mx = Math.max(contrib, srv);
     let vc, vt, vd;
-    if (contribution > servicesRecus * 1.2) {
-        vc = 'negative'; vt = `Vous etes contributeur net : +${fmtMoney(contribution - servicesRecus)} au-dela des services recus.`;
-        vd = "C'est le principe de solidarite nationale : les plus hauts revenus financent davantage qu'ils ne consomment directement.";
-    } else if (servicesRecus > contribution * 1.2) {
-        vc = 'positive'; vt = `Vous etes beneficiaire net : ~${fmtMoney(servicesRecus - contribution)} de services au-dela de votre contribution.`;
-        vd = "Le systeme de redistribution fonctionne en votre faveur via les services publics et les transferts sociaux.";
-    } else {
-        vc = 'neutral'; vt = "Votre contribution et les services recus sont globalement equilibres.";
-        vd = "Vous contribuez a peu pres autant que ce que vous recevez en services publics.";
-    }
-
+    if (contrib > srv * 1.2) { vc='negative'; vt=`Contributeur net : +${fmtMoney(contrib-srv)} au-dela des services recus.`; vd="Principe de solidarite nationale."; }
+    else if (srv > contrib * 1.2) { vc='positive'; vt=`Beneficiaire net : ~${fmtMoney(srv-contrib)} de services au-dela de votre contribution.`; vd="Redistribution en votre faveur."; }
+    else { vc='neutral'; vt="Contribution et services equilibres."; vd="Cas typique de la classe moyenne."; }
     document.getElementById('balanceContent').innerHTML = `
-        <div class="balance-bar"><div class="label">Vous contribuez</div><div class="bar-bg"><div class="bar-fill" style="width:${contribution/mx*100}%;background:var(--blue)">${fmtMoney(contribution)}</div></div></div>
-        <div class="balance-bar"><div class="label">Vous recevez*</div><div class="bar-bg"><div class="bar-fill" style="width:${servicesRecus/mx*100}%;background:var(--green)">${fmtMoney(servicesRecus)}</div></div></div>
+        <div class="balance-bar"><div class="label">Vous contribuez</div><div class="bar-bg"><div class="bar-fill" style="width:${contrib/mx*100}%;background:var(--blue)">${fmtMoney(contrib)}</div></div></div>
+        <div class="balance-bar"><div class="label">Vous recevez*</div><div class="bar-bg"><div class="bar-fill" style="width:${srv/mx*100}%;background:var(--green)">${fmtMoney(srv)}</div></div></div>
         <div class="balance-verdict ${vc}"><div class="verdict-text">${vt}</div><div class="verdict-detail">${vd}</div></div>
-        <p style="font-size:0.72rem;color:#999;margin-top:0.8rem;text-align:center">* Estimation basee sur la depense publique moyenne par habitant (${fmtMoney(depenseParHab)}/an) ajustee selon votre situation.</p>`;
+        <p style="font-size:0.72rem;color:#999;margin-top:0.8rem;text-align:center">* Depense publique moyenne ~${fmtMoney(20880)}/hab/an ajustee.</p>`;
 }
 
-// =============================================
-// HELPERS
-// =============================================
+// Helpers
 function fmtMoney(n) { return (n||0).toLocaleString('fr-FR') + ' \u20AC'; }
 function fmtNum(n) { return (n||0).toLocaleString('fr-FR'); }
 function r(n) { return Math.round(n); }
-function pct(val, base) { return base > 0 ? (val/base*100).toFixed(1) + '%' : '-'; }
+function pct(v, b) { return b > 0 ? (v/b*100).toFixed(1) + '%' : '-'; }
 
-// Init
 window.addEventListener('DOMContentLoaded', () => { updateFormVisibility(); calculer(); });
 </script>
-
 </body>
 </html>
